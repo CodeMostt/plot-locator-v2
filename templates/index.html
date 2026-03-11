@@ -10,56 +10,78 @@
             --vacant: #e74c3c; --edit: #3498db; --bg: #f4f7f6; 
         }
         
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 15px; text-align: center; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 10px; text-align: center; overflow-x: hidden; }
         
         /* Admin Bar */
-        .admin-bar { text-align: right; padding-bottom: 10px; font-size: 0.8rem; }
-        .admin-btn { background: none; border: 1px solid #ccc; cursor: pointer; padding: 4px 10px; border-radius: 4px; }
-        
-        .header h1 { color: #2c3e50; font-size: 1.6rem; margin-bottom: 20px; }
+        .admin-bar { text-align: right; padding: 5px 10px; font-size: 0.8rem; background: white; margin-bottom: 10px; border-radius: 8px; }
+        .header h1 { color: #2c3e50; font-size: 1.4rem; margin: 10px 0; }
 
         /* Controls */
-        .controls { display: flex; flex-direction: column; align-items: center; gap: 15px; margin-bottom: 25px; }
-        .row { display: flex; justify-content: center; gap: 10px; width: 100%; max-width: 600px; flex-wrap: wrap; }
-        select, input { padding: 12px; border-radius: 8px; border: 1px solid #ddd; width: 100%; max-width: 200px; outline: none; }
-        .btn-search { background: var(--gold); color: white; border: none; padding: 12px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .controls { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-bottom: 20px; }
+        .row { display: flex; justify-content: center; gap: 8px; width: 100%; max-width: 600px; flex-wrap: wrap; }
+        select, input { padding: 10px; border-radius: 8px; border: 1px solid #ddd; width: 45%; outline: none; font-size: 0.9rem; }
+        #plot-search { width: 60%; }
+        .btn-search { background: var(--gold); color: white; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; }
 
         /* Map UI */
-        .map-section { display: none; margin: 0 auto; max-width: 1200px; border: 3px solid var(--gold); border-radius: 12px; position: relative; overflow: hidden; background: white; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
-        #map-image { width: 100%; height: auto; display: block; }
+        .map-section { display: none; margin: 0 auto; max-width: 1200px; border: 2px solid var(--gold); border-radius: 12px; position: relative; overflow: hidden; background: white; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        #map-image { width: 100%; height: auto; display: block; z-index: 1; }
         #svg-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; pointer-events: none; }
-        polygon { pointer-events: auto; cursor: pointer; transition: 0.2s; }
+        polygon { pointer-events: auto; cursor: pointer; transition: fill 0.2s; }
+
+        /* Dimmed Overlay (Mobile Only) */
+        #modal-overlay { 
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.4); z-index: 9998; backdrop-filter: blur(2px);
+        }
 
         /* Tooltip & Edit Box */
         #tooltip { 
-            position: fixed; display: none; background: white; padding: 15px; border-radius: 10px; 
-            box-shadow: 0 8px 30px rgba(0,0,0,0.3); z-index: 10000; width: 260px; text-align: left; 
-            border-top: 6px solid var(--gold); pointer-events: auto; 
+            position: fixed; display: none; background: white; padding: 0 20px 20px 20px; border-radius: 15px; 
+            box-shadow: 0 15px 50px rgba(0,0,0,0.3); z-index: 10000; width: 300px; 
+            max-height: 80vh; overflow-y: auto; overflow-x: hidden; text-align: left; border-top: 8px solid var(--gold); 
+            pointer-events: auto; will-change: transform, left, top;
+            transition: opacity 0.15s ease-out;
         }
-        .t-label { font-size: 0.65rem; color: #95a5a6; text-transform: uppercase; font-weight: bold; display: block; margin-top: 8px; }
-        .t-value { font-size: 0.95rem; color: #2c3e50; font-weight: 600; display: block; }
-        .edit-input { width: 100%; padding: 8px; margin-top: 4px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
-        .btn-save { background: #27ae60; color: white; border: none; padding: 12px; border-radius: 6px; font-weight: bold; width: 100%; margin-top: 15px; cursor: pointer; }
-        .btn-edit-inline { margin-top:15px; width:100%; padding:8px; background:var(--edit); color:white; border:none; border-radius:5px; cursor:pointer; font-weight:bold; }
 
-        /* Summary Bar */
-        .summary-bar { display: none; justify-content: center; gap: 15px; margin-top: 20px; flex-wrap: wrap; }
-        .summary-card { background: white; padding: 10px 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border-bottom: 4px solid #ddd; min-width: 100px; }
+        #tooltip::-webkit-scrollbar { width: 6px; }
+        #tooltip::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
+        #tooltip::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 10px; }
+
+        .t-header-row { 
+            display: flex; justify-content: space-between; align-items: center; 
+            position: sticky; top: 0; background: white; z-index: 11; 
+            padding: 15px 0 10px 0; border-bottom: 1px solid #eee; margin-bottom: 10px;
+        }
+
+        .t-label { font-size: 0.65rem; color: #95a5a6; text-transform: uppercase; font-weight: bold; display: block; margin-top: 10px; }
+        .t-value { font-size: 1rem; color: #2c3e50; font-weight: 600; display: block; }
+        
+        .edit-input { width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
+        .btn-save { background: #27ae60; color: white; border: none; padding: 14px; border-radius: 8px; font-weight: bold; width: 100%; margin-top: 15px; cursor: pointer; }
+        .btn-edit-inline { margin-top:15px; width:100%; padding:12px; background:var(--edit); color:white; border:none; border-radius:8px; cursor:pointer; font-weight:bold; }
+        .btn-close-right { background: #f1f1f1; border: none; padding: 5px 12px; border-radius: 5px; cursor: pointer; font-size: 1.2rem; color: #666; }
+
+        .summary-bar { display: none; justify-content: center; gap: 8px; margin-top: 15px; flex-wrap: wrap; }
+        .summary-card { background: white; padding: 8px; border-radius: 8px; border-bottom: 3px solid #ddd; min-width: 75px; flex: 1; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .summary-card.total { border-color: var(--gold); }
         .summary-card.reg { border-color: var(--registry); }
         .summary-card.book { border-color: var(--booked); }
         .summary-card.vacant { border-color: var(--vacant); }
-        .s-count { font-size: 1.4rem; font-weight: bold; display: block; color: #2c3e50; }
-        .s-label { font-size: 0.7rem; text-transform: uppercase; color: #95a5a6; font-weight: bold; }
+        .s-count { font-size: 1.1rem; font-weight: bold; display: block; color: #2c3e50; }
+        .s-label { font-size: 0.55rem; text-transform: uppercase; color: #95a5a6; font-weight: bold; }
 
-        .legend { display: flex; justify-content: center; gap: 20px; margin-top: 20px; font-size: 0.8rem; }
-        .dot { width: 12px; height: 12px; border-radius: 3px; display: inline-block; margin-right: 5px; }
+        @media (max-width: 767px) {
+            #tooltip { width: 320px; max-width: 85vw; left: 50% !important; top: 50% !important; transform: translate(-50%, -50%) !important; }
+        }
     </style>
 </head>
 <body>
+    <div id="modal-overlay" onclick="closeTooltip()"></div>
+
     <div class="admin-bar">
         {% if is_admin %} <span style="color:var(--registry); font-weight:bold;">● Admin Mode Active</span> | <a href="/logout" style="color:red; text-decoration:none;">Logout</a>
-        {% else %} <button class="admin-btn" onclick="showLoginPrompt()">Admin Login</button> {% endif %}
+        {% else %} <button onclick="showLoginPrompt()" style="border:none; background:none; color:var(--gold); font-weight:bold; cursor:pointer;">Admin Login</button> {% endif %}
     </div>
 
     <div class="header"><h1>Techunited Plot Locator</h1></div>
@@ -70,16 +92,16 @@
                 <option value="">Select City</option>
                 {% for city in cities %}<option value="{{ city }}">{{ city }}</option>{% endfor %}
             </select>
-            <select id="project-select" onchange="loadMap()" disabled></select>
+            <select id="project-select" onchange="loadMap()" disabled><option>Select Project</option></select>
         </div>
         <div class="row" id="search-area" style="display:none;">
-            <input type="text" id="plot-search" placeholder="Enter Plot ID (e.g. 1)">
-            <button class="btn-search" onclick="searchPlot()">Find Plot</button>
+            <input type="text" id="plot-search" placeholder="Enter Plot ID">
+            <button class="btn-search" onclick="searchPlot()">Find</button>
         </div>
     </div>
 
     <div id="map-area" class="map-section">
-        <div style="position:relative;">
+        <div style="position:relative; width:100%;">
             <img id="map-image" src="">
             <svg id="svg-overlay"></svg>
         </div>
@@ -87,15 +109,15 @@
 
     <div class="summary-bar" id="summary-bar">
         <div class="summary-card total"><span class="s-count" id="count-total">0</span><span class="s-label">Total</span></div>
-        <div class="summary-card reg"><span class="s-count" id="count-reg">0</span><span class="s-label">Registry Done</span></div>
+        <div class="summary-card reg"><span class="s-count" id="count-reg">0</span><span class="s-label">Registry</span></div>
         <div class="summary-card book"><span class="s-count" id="count-book">0</span><span class="s-label">Booked</span></div>
         <div class="summary-card vacant"><span class="s-count" id="count-vacant">0</span><span class="s-label">Vacant</span></div>
     </div>
 
-    <div class="legend" id="map-legend" style="display:none;">
-        <span><div class="dot" style="background:var(--registry)"></div> Registry done</span>
-        <span><div class="dot" style="background:var(--booked)"></div> Booked</span>
-        <span><div class="dot" style="background:var(--vacant)"></div> Vacant</span>
+    <div class="legend" id="map-legend" style="display:none; justify-content:center; gap:15px; margin-top:15px; font-size:0.75rem;">
+        <span><div style="width:10px;height:10px;background:var(--registry);display:inline-block;border-radius:2px;"></div> Registry</span>
+        <span><div style="width:10px;height:10px;background:var(--booked);display:inline-block;border-radius:2px;"></div> Booked</span>
+        <span><div style="width:10px;height:10px;background:var(--vacant);display:inline-block;border-radius:2px;"></div> Vacant</span>
     </div>
 
     <div id="tooltip"><div id="tooltip-content"></div></div>
@@ -104,12 +126,12 @@
         const IS_ADMIN = "{{ 'true' if is_admin else 'false' }}" === "true";
         const citySel = document.getElementById('city-select'), projSel = document.getElementById('project-select');
         const mapImg = document.getElementById('map-image'), svgOverlay = document.getElementById('svg-overlay');
-        const tooltip = document.getElementById('tooltip');
+        const tooltip = document.getElementById('tooltip'), overlay = document.getElementById('modal-overlay');
         
         let isLocked = false, currentPlotData = null, activePoly = null, lastFetchedPlots = [], hideTimer;
 
         function showLoginPrompt() {
-            const user = prompt("Admin Username:"), pass = prompt("Admin Password:");
+            const user = prompt("User:"), pass = prompt("Pass:");
             if (user && pass) {
                 fetch('/login', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({username: user, password: pass}) })
                 .then(res => res.json()).then(data => { if(data.success) location.reload(); else alert("Denied"); });
@@ -146,29 +168,41 @@
             fetch(`/get_all_plots?city=${citySel.value}&project=${projSel.value}`).then(res => res.json()).then(plots => {
                 lastFetchedPlots = plots; 
                 document.getElementById('search-area').style.display = 'flex'; 
-                document.getElementById('map-legend').style.display = 'flex';
                 updateSummary(plots);
                 mapImg.onload = () => renderPlots(plots);
                 if(mapImg.complete) mapImg.onload();
             });
         }
 
-        function highlightPolygon(poly, status) {
-            if (activePoly) resetPolygon(activePoly);
-            activePoly = poly;
+        function getColor(status) {
             const s = status.trim().toLowerCase();
-            let color, fill;
-            if (s.includes('reg')) { color = "#2ecc71"; fill = "rgba(46, 204, 113, 0.4)"; }
-            else if (s.includes('book')) { color = "#f1c40f"; fill = "rgba(241, 196, 15, 0.4)"; }
-            else if (s === 'editing') { color = "#3498db"; fill = "rgba(52, 152, 219, 0.4)"; }
-            else { color = "#e74c3c"; fill = "rgba(231, 76, 60, 0.4)"; }
-            poly.setAttribute("fill", fill);
-            poly.setAttribute("stroke", color);
-            poly.setAttribute("stroke-width", "4");
-            tooltip.style.borderTopColor = color;
+            if (s.includes('reg')) return { color: "#2ecc71", fill: "rgba(46, 204, 113, 0.4)" };
+            if (s.includes('book')) return { color: "#f1c40f", fill: "rgba(241, 196, 15, 0.4)" };
+            return { color: "#e74c3c", fill: "rgba(231, 76, 60, 0.2)" };
         }
 
-        function resetPolygon(poly) { if (poly) { poly.setAttribute("fill", "transparent"); poly.setAttribute("stroke", "transparent"); } }
+        function highlightPolygon(poly, status) {
+            if (activePoly && activePoly !== poly) resetPolygon(activePoly);
+            activePoly = poly;
+            const colors = getColor(status);
+            poly.setAttribute("fill", colors.fill.replace("0.4", "0.6").replace("0.2", "0.6"));
+            poly.setAttribute("stroke", colors.color);
+            poly.setAttribute("stroke-width", "4");
+            tooltip.style.borderTopColor = colors.color;
+        }
+
+        function resetPolygon(poly) { 
+            if (poly) { 
+                const id = poly.id.replace('poly-', '');
+                const plot = lastFetchedPlots.find(p => String(p.plot_id).trim() === id);
+                if (plot) {
+                    const colors = getColor(plot.status);
+                    poly.setAttribute("fill", colors.fill);
+                    poly.setAttribute("stroke", colors.color);
+                    poly.setAttribute("stroke-width", "1");
+                }
+            } 
+        }
 
         function renderPlots(plots) {
             svgOverlay.innerHTML = '';
@@ -176,18 +210,40 @@
             plots.forEach(plot => {
                 const poly = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
                 poly.setAttribute("points", plot.coords);
-                poly.setAttribute("fill", "transparent");
                 poly.id = "poly-" + String(plot.plot_id).trim();
 
-                poly.onmouseover = () => { if (!isLocked) { clearTimeout(hideTimer); highlightPolygon(poly, plot.status); showInfo(plot); } };
-                poly.onmouseout = () => { if (!isLocked) { hideTimer = setTimeout(() => { if (!tooltip.matches(':hover')) closeTooltip(); }, 300); } };
+                const colors = getColor(plot.status);
+                poly.setAttribute("fill", colors.fill);
+                poly.setAttribute("stroke", colors.color);
+                poly.setAttribute("stroke-width", "1");
+
+                poly.onmouseenter = (e) => {
+                    if (!isLocked && window.innerWidth >= 768) {
+                        clearTimeout(hideTimer);
+                        highlightPolygon(poly, plot.status);
+                        showInfo(plot);
+                    }
+                };
+                poly.onmouseleave = () => {
+                    if (!isLocked && window.innerWidth >= 768) {
+                        hideTimer = setTimeout(() => { if (!tooltip.matches(':hover')) closeTooltip(); }, 150);
+                    }
+                };
+                poly.onclick = (e) => {
+                    if (window.innerWidth < 768) {
+                        isLocked = true;
+                        highlightPolygon(poly, plot.status);
+                        showInfo(plot);
+                    }
+                };
+
                 if (IS_ADMIN) poly.oncontextmenu = (e) => { e.preventDefault(); highlightPolygon(poly, 'editing'); startEdit(plot, e.clientX, e.clientY); };
                 svgOverlay.appendChild(poly);
             });
         }
 
         tooltip.onmouseenter = () => clearTimeout(hideTimer);
-        tooltip.onmouseleave = () => { if (!isLocked) closeTooltip(); };
+        tooltip.onmouseleave = () => { if (!isLocked && window.innerWidth >= 768) closeTooltip(); };
 
         function searchPlot() {
             const searchId = document.getElementById('plot-search').value.trim();
@@ -195,60 +251,75 @@
             if (match) {
                 const poly = document.getElementById("poly-" + String(match.plot_id).trim());
                 if (poly) {
+                    if(window.innerWidth < 768) isLocked = true;
                     highlightPolygon(poly, match.status);
                     showInfo(match);
                     poly.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }
-            } else { alert("Plot ID not found."); }
+            } else { alert("ID not found"); }
         }
 
         function showInfo(data) {
             currentPlotData = data;
-            const s = data.status.trim().toLowerCase();
-            let statusColor = s.includes('reg') ? "#2ecc71" : s.includes('book') ? "#f1c40f" : "#e74c3c";
+            const colors = getColor(data.status);
             let content = `
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <span class="t-label">Plot ID</span><span class="t-value" style="color:var(--gold);">#${data.plot_id}</span>
+                <div class="t-header-row">
+                    <span class="t-value" style="color:var(--gold); margin-top:0;">Plot #${data.plot_id}</span>
+                    <button class="btn-close-right" onclick="closeTooltip()">&times;</button>
                 </div>
-                <span class="t-label">Size</span><span class="t-value">${data.size || 'N/A'}</span>
-                <span class="t-label">Status</span><span class="t-value" style="color:${statusColor}">${data.status}</span>
-                <span class="t-label">Owner</span><span class="t-value">${data.owner || 'N/A'}</span>`;
+                <div>
+                    <span class="t-label">Size</span><span class="t-value">${data.size || 'N/A'}</span>
+                    <span class="t-label">Status</span><span class="t-value" style="color:${colors.color}">${data.status}</span>
+                    <span class="t-label">Owner</span><span class="t-value">${data.owner || 'N/A'}</span>`;
 
-            if (!s.includes('vac')) {
+            if (!data.status.toLowerCase().includes('vac')) {
                 content += `<span class="t-label">Number</span><span class="t-value">${data.customer_number || 'N/A'}</span>
                             <span class="t-label">Booking Date</span><span class="t-value">${data.booking_date || 'N/A'}</span>`;
             }
-            if (s.includes('reg')) {
+            if (data.status.toLowerCase().includes('reg')) {
                 content += `<span class="t-label">Registry Date</span><span class="t-value">${data.registry_date || 'N/A'}</span>`;
             }
             if (IS_ADMIN) content += `<button class="btn-edit-inline" onclick="triggerEditFromHover()">Edit Plot</button>`;
+            
+            content += `</div>`;
             document.getElementById('tooltip-content').innerHTML = content;
             tooltip.style.display = 'block';
+            if(window.innerWidth < 768) {
+                overlay.style.display = 'block';
+                tooltip.style.left = '50%';
+                tooltip.style.top = '50%';
+                tooltip.style.transform = 'translate(-50%, -50%)';
+            }
         }
 
         function triggerEditFromHover() { const rect = tooltip.getBoundingClientRect(); startEdit(currentPlotData, rect.left, rect.top); }
 
         function startEdit(data, x, y) {
             isLocked = true; currentPlotData = data;
-            tooltip.style.left = x + 'px'; tooltip.style.top = y + 'px';
+            if (window.innerWidth < 768) overlay.style.display = 'block';
+            else { tooltip.style.left = (x + 25) + 'px'; tooltip.style.top = '10%'; }
+
             document.getElementById('tooltip-content').innerHTML = `
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                    <strong>Edit Plot #${data.plot_id}</strong>
-                    <button onclick="closeTooltip()" style="background:none; border:none; font-size:1.5rem; cursor:pointer; color:#999;">&times;</button>
+                <div class="t-header-row">
+                    <strong style="color:var(--edit);">Edit #${data.plot_id}</strong>
+                    <button class="btn-close-right" onclick="closeTooltip()">&times;</button>
                 </div>
-                <span class="t-label">Size</span><input type="text" id="edit-size" value="${data.size}" class="edit-input">
-                <span class="t-label">Status</span>
-                <select id="edit-status" class="edit-input">
-                    <option value="Registry done" ${data.status.includes('Reg') ? 'selected' : ''}>Registry done</option>
-                    <option value="Booked" ${data.status.includes('Book') ? 'selected' : ''}>Booked</option>
-                    <option value="Vacant" ${data.status.includes('Vac') ? 'selected' : ''}>Vacant</option>
-                </select>
-                <span class="t-label">Owner Name</span><input type="text" id="edit-owner" value="${data.owner}" class="edit-input">
-                <span class="t-label">Number</span><input type="text" id="edit-num" value="${data.customer_number || ''}" class="edit-input">
-                <span class="t-label">Booking Date</span><input type="date" id="edit-book-date" value="${data.booking_date || ''}" class="edit-input">
-                <span class="t-label">Registry Date</span><input type="date" id="edit-reg-date" value="${data.registry_date || ''}" class="edit-input">
-                <button class="btn-save" onclick="saveDetails()">Save Changes</button>
-                <button onclick="closeTooltip()" style="margin-top:8px; width:100%; padding:10px; background:#f1f1f1; border:none; border-radius:6px; cursor:pointer;">Cancel</button>`;
+                <div>
+                    <span class="t-label">Size</span><input type="text" id="edit-size" value="${data.size}" class="edit-input">
+                    <span class="t-label">Status</span>
+                    <select id="edit-status" class="edit-input">
+                        <option value="Registry done" ${data.status.includes('Reg') ? 'selected' : ''}>Registry done</option>
+                        <option value="Booked" ${data.status.includes('Book') ? 'selected' : ''}>Booked</option>
+                        <option value="Vacant" ${data.status.includes('Vac') ? 'selected' : ''}>Vacant</option>
+                    </select>
+                    <span class="t-label">Owner</span><input type="text" id="edit-owner" value="${data.owner}" class="edit-input">
+                    <span class="t-label">Number</span><input type="text" id="edit-num" value="${data.customer_number || ''}" class="edit-input">
+                    <span class="t-label">Booking Date</span><input type="date" id="edit-book-date" value="${data.booking_date || ''}" class="edit-input">
+                    <span class="t-label">Registry Date</span><input type="date" id="edit-reg-date" value="${data.registry_date || ''}" class="edit-input">
+                    <button class="btn-save" onclick="saveDetails()">Save</button>
+                    <button onclick="closeTooltip()" style="width:100%; padding:12px; margin-top:10px; border:none; border-radius:8px; background:#eee; cursor:pointer;">Cancel</button>
+                </div>`;
+            tooltip.style.display = 'block';
         }
 
         function saveDetails() {
@@ -262,10 +333,25 @@
             .then(res => res.json()).then(res => { if(res.success) { isLocked = false; closeTooltip(); loadMap(); } });
         }
 
-        function closeTooltip() { isLocked = false; if (activePoly) resetPolygon(activePoly); tooltip.style.display = 'none'; }
+        function closeTooltip() { 
+            isLocked = false; 
+            if (activePoly) resetPolygon(activePoly); 
+            tooltip.style.display = 'none'; 
+            overlay.style.display = 'none'; 
+            tooltip.scrollTop = 0;
+        }
         
+        let rAF;
         document.addEventListener('mousemove', (e) => { 
-            if (!isLocked && !tooltip.matches(':hover')) { tooltip.style.left = (e.clientX + 15) + 'px'; tooltip.style.top = (e.clientY + 15) + 'px'; } 
+            if (!isLocked && !tooltip.matches(':hover') && window.innerWidth >= 768) { 
+                if (rAF) cancelAnimationFrame(rAF);
+                rAF = requestAnimationFrame(() => {
+                    // Offset increased to 25px away from cursor
+                    tooltip.style.left = (e.clientX + 25) + 'px'; 
+                    tooltip.style.top = (e.clientY + 25) + 'px'; 
+                    tooltip.style.transform = 'none';
+                });
+            } 
         });
     </script>
 </body>
