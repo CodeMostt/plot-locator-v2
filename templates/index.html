@@ -38,7 +38,6 @@
         .nav-controls { display: none; margin-bottom: 15px; }
         .btn-back { background: #95a5a6; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; margin-bottom: 10px; }
         
-        /* NEW: Added transition for smooth crossfade */
         .map-section { 
             display: none; 
             margin: 0 auto; 
@@ -124,29 +123,29 @@
     <div id="landing-projects">
         <div class="gallery-title">Featured Projects</div>
         <div class="project-grid">
+            
             <div class="project-card" onclick="quickLoad('Khandwa', 'muffadal_park')">
-                <img src="/static/Khandwa/muffadal_park/map.png" onerror="this.src='https://placehold.co/400x250?text=Listing'">
+                <img src="https://jpeezqoinwzrruknbsmy.supabase.co/storage/v1/object/public/project-maps/Khandwa/muffadal_park/map.png" onerror="this.src='https://placehold.co/400x250?text=Listing'">
                 <div class="project-info"><span class="project-name">Muffadal Park</span><span class="project-city">Khandwa</span></div>
             </div>
 
             <div class="project-card" onclick="quickLoad('Khandwa', 'smart_city')">
-                <img src="/static/Khandwa/smart_city/map.png" onerror="this.src='https://placehold.co/400x250?text=Listing'">
+                <img src="https://jpeezqoinwzrruknbsmy.supabase.co/storage/v1/object/public/project-maps/Khandwa/smart_city/map.png" onerror="this.src='https://placehold.co/400x250?text=Listing'">
                 <div class="project-info"><span class="project-name">Smart City</span><span class="project-city">Khandwa</span></div>
             </div>
 
-
             <div class="project-card" onclick="quickLoad('Khandwa', 'hi_link')">
-                <img src="/static/Khandwa/hi_link/map.png" onerror="this.src='https://placehold.co/400x250?text=Listing'">
+                <img src="https://jpeezqoinwzrruknbsmy.supabase.co/storage/v1/object/public/project-maps/Khandwa/hi_link/map.png" onerror="this.src='https://placehold.co/400x250?text=Listing'">
                 <div class="project-info"><span class="project-name">Hi Link City</span><span class="project-city">Khandwa</span></div>
             </div>
 
             <div class="project-card" onclick="quickLoad('Mundi', 'mahaveer_nagar')">
-                <img src="/static/Mundi/mahaveer_nagar/map.png" onerror="this.src='https://placehold.co/400x250?text=Listing'">
+                <img src="https://jpeezqoinwzrruknbsmy.supabase.co/storage/v1/object/public/project-maps/Mundi/mahaveer_nagar/map.png" onerror="this.src='https://placehold.co/400x250?text=Listing'">
                 <div class="project-info"><span class="project-name">Mahaveer Nagar</span><span class="project-city">Mundi</span></div>
             </div>
 
             <div class="project-card" onclick="quickLoad('Jawar', 'shree_ganpati_residency')">
-                <img src="/static/Jawar/shree_ganpati_residency/map.png" onerror="this.src='https://placehold.co/400x250?text=Listing'">
+                <img src="https://jpeezqoinwzrruknbsmy.supabase.co/storage/v1/object/public/project-maps/Jawar/shree_ganpati_residency/map.png" onerror="this.src='https://placehold.co/400x250?text=Listing'">
                 <div class="project-info"><span class="project-name">Shree Ganpati Residency</span><span class="project-city">Jawar</span></div>
             </div>
 
@@ -231,7 +230,6 @@
             updateProjects(project);
         }
 
-        // NEW: Double-Fade Map Loading
         function loadMap() {
             if (!projSel.value) return;
 
@@ -247,28 +245,35 @@
             document.getElementById('nav-controls').style.display = 'block';
             mapArea.style.display = 'block';
 
-            // Fetch the new CSV data
+            // Fetch the new Supabase data via Flask
             fetch(`/get_all_plots?city=${citySel.value}&project=${projSel.value}`)
             .then(res => res.json())
             .then(plots => {
-                lastFetchedPlots = plots; 
-                document.getElementById('search-area').style.display = 'flex';
-                updateSummary(plots); 
-                
-                // Swap the image AND render plots invisibly, then fade in
-                mapImg.onload = () => {
-                    renderPlots(plots);
-                    mapArea.style.opacity = '1';
-                };
-                
-                mapImg.src = `/static/${citySel.value}/${projSel.value}/map.png`;
-                if(mapImg.complete) mapImg.onload();
+                // Ensure data is valid before processing
+                if (Array.isArray(plots)) {
+                    lastFetchedPlots = plots; 
+                    document.getElementById('search-area').style.display = 'flex';
+                    updateSummary(plots); 
+                    
+                    // Swap the image AND render plots invisibly, then fade in
+                    mapImg.onload = () => {
+                        renderPlots(plots);
+                        mapArea.style.opacity = '1';
+                    };
+                    
+                    // Use Supabase Storage URL
+                    mapImg.src = `https://jpeezqoinwzrruknbsmy.supabase.co/storage/v1/object/public/project-maps/${citySel.value}/${projSel.value}/map.png`;
+                    if(mapImg.complete) mapImg.onload();
+                } else {
+                    console.error("Data error. Expected array, received:", plots);
+                    alert("Error loading plot data. Check console logs.");
+                }
             });
         }
 
         function getColor(status, manualColor) {
             if (manualColor === 'blue') return { color: "#3498db", fill: "rgba(52, 152, 219, 0.4)" };
-            const s = status.toLowerCase();
+            const s = status ? status.toLowerCase() : "";
             if (s.includes('reg')) return { color: "#2ecc71", fill: "rgba(46, 204, 113, 0.4)" };
             if (s.includes('book')) return { color: "#f1c40f", fill: "rgba(241, 196, 15, 0.4)" };
             return { color: "#e74c3c", fill: "rgba(231, 76, 60, 0.2)" };
@@ -295,6 +300,7 @@
         function renderPlots(plots) {
             svgOverlay.innerHTML = ''; svgOverlay.setAttribute('viewBox', `0 0 ${mapImg.naturalWidth} ${mapImg.naturalHeight}`);
             plots.forEach(plot => {
+                if(!plot.coords) return; // Skip if no coordinates exist
                 const poly = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
                 poly.setAttribute("points", plot.coords); const colors = getColor(plot.status, plot.color);
                 poly.setAttribute("fill", colors.fill); poly.setAttribute("stroke", colors.color); poly.setAttribute("stroke-width", "1");
@@ -323,10 +329,11 @@
         function showInfo(data, x, y) {
             currentPlotData = data; const isBlue = data.color === 'blue'; const colors = getColor(data.status, data.color);
             let content = `<div class="t-header-row"><span class="t-value" style="color:var(--gold); font-size:1.4rem;">Plot #${data.plot_id}</span><button onclick="closeTooltip()">DONE</button></div><div class="t-body-content"><span class="t-label">Type</span><span class="t-value">${isBlue ? "Land Owner" : "Developer Owned"}</span><span class="t-label">Size</span><span class="t-value">${data.size || 'N/A'}</span>`;
-            if (!isBlue) content += `<span class="t-label">Status</span><span class="t-value" style="color:${colors.color}">${data.status}</span>`;
+            
+            if (!isBlue) content += `<span class="t-label">Status</span><span class="t-value" style="color:${colors.color}">${data.status || 'N/A'}</span>`;
             content += `<span class="t-label">Owner</span><span class="t-value">${data.owner || 'N/A'}</span>`;
             
-            if (!data.status.toLowerCase().includes('vac')) {
+            if (data.status && !data.status.toLowerCase().includes('vac')) {
                 let phone = data.customer_number || 'N/A'; 
                 content += `<span class="t-label">Contact Number</span><span class="t-value">${phone}</span>`;
                 
@@ -345,6 +352,7 @@
             
             document.getElementById('tooltip-content').innerHTML = content + '</div>';
             tooltip.style.display = 'block';
+            
             if (window.innerWidth >= 768) {
                 if (isLocked) { overlay.style.display = 'block'; tooltip.classList.add('is-centered'); }
                 else { tooltip.classList.remove('is-centered'); tooltip.style.left = (x + 25) + 'px'; tooltip.style.top = (y + 25) + 'px'; overlay.style.display = 'none'; }
@@ -353,8 +361,36 @@
 
         function startEdit(data) {
             isLocked = true; currentPlotData = data;
-            document.getElementById('tooltip-content').innerHTML = `<div class="t-header-row"><strong style="color:var(--edit);">Edit #${data.plot_id}</strong><button onclick="closeTooltip()">CANCEL</button></div><div class="t-body-content"><span class="t-label">Size</span><input type="text" id="edit-size" value="${data.size || ''}" class="edit-input"><span class="t-label">Status</span><select id="edit-status" class="edit-input"><option value="Registry done" ${data.status.includes('Reg') ? 'selected' : ''}>Registry done</option><option value="Booked" ${data.status.includes('Book') ? 'selected' : ''}>Booked</option><option value="Vacant" ${data.status.includes('Vac') ? 'selected' : ''}>Vacant</option></select><span class="t-label">Color</span><select id="edit-color" class="edit-input"><option value="">Default</option><option value="blue" ${data.color === 'blue' ? 'selected' : ''}>Blue (Owner)</option></select><span class="t-label">Owner</span><input type="text" id="edit-owner" value="${data.owner || ''}" class="edit-input"><span class="t-label">Number</span><input type="text" id="edit-num" value="${data.customer_number || ''}" class="edit-input"><span class="t-label">Booking Date</span><input type="date" id="edit-book" value="${data.booking_date || ''}" class="edit-input"><span class="t-label">Registry Date</span><input type="date" id="edit-reg" value="${data.registry_date || ''}" class="edit-input"><button onclick="saveDetails()" style="background:#27ae60; color:white; border:none; padding:15px; border-radius:8px; width:100%; margin-top:15px; cursor:pointer; font-weight:bold;">Save Changes</button></div>`;
-            tooltip.style.display = 'block'; if (window.innerWidth >= 768) { tooltip.classList.add('is-centered'); overlay.style.display = 'block'; } else applyZoomProofLayout();
+            
+            const currentStatus = data.status || '';
+            const statusReg = currentStatus.toLowerCase().includes('reg') ? 'selected' : '';
+            const statusBook = currentStatus.toLowerCase().includes('book') ? 'selected' : '';
+            const statusVac = currentStatus.toLowerCase().includes('vac') ? 'selected' : '';
+
+            document.getElementById('tooltip-content').innerHTML = `
+                <div class="t-header-row"><strong style="color:var(--edit);">Edit #${data.plot_id}</strong><button onclick="closeTooltip()">CANCEL</button></div>
+                <div class="t-body-content">
+                    <span class="t-label">Size</span><input type="text" id="edit-size" value="${data.size || ''}" class="edit-input">
+                    <span class="t-label">Status</span>
+                    <select id="edit-status" class="edit-input">
+                        <option value="Registry done" ${statusReg}>Registry done</option>
+                        <option value="Booked" ${statusBook}>Booked</option>
+                        <option value="Vacant" ${statusVac}>Vacant</option>
+                    </select>
+                    <span class="t-label">Color</span>
+                    <select id="edit-color" class="edit-input">
+                        <option value="">Default</option>
+                        <option value="blue" ${data.color === 'blue' ? 'selected' : ''}>Blue (Owner)</option>
+                    </select>
+                    <span class="t-label">Owner</span><input type="text" id="edit-owner" value="${data.owner || ''}" class="edit-input">
+                    <span class="t-label">Number</span><input type="text" id="edit-num" value="${data.customer_number || ''}" class="edit-input">
+                    <span class="t-label">Booking Date</span><input type="date" id="edit-book" value="${data.booking_date || ''}" class="edit-input">
+                    <span class="t-label">Registry Date</span><input type="date" id="edit-reg" value="${data.registry_date || ''}" class="edit-input">
+                    <button onclick="saveDetails()" style="background:#27ae60; color:white; border:none; padding:15px; border-radius:8px; width:100%; margin-top:15px; cursor:pointer; font-weight:bold;">Save Changes</button>
+                </div>`;
+            
+            tooltip.style.display = 'block'; 
+            if (window.innerWidth >= 768) { tooltip.classList.add('is-centered'); overlay.style.display = 'block'; } else applyZoomProofLayout();
         }
 
         function saveDetails() {
@@ -365,9 +401,18 @@
         function closeTooltip() { isLocked = false; if (activePoly) resetPolygon(activePoly); tooltip.style.display = 'none'; overlay.style.display = 'none'; tooltip.classList.remove('is-centered'); document.body.classList.remove('no-scroll'); document.getElementById('tooltip-content').style.transform = 'none'; }
 
         function updateSummary(plots) {
-            const total = plots.length; const reg = plots.filter(p => p.status.toLowerCase().includes('reg')).length; const book = plots.filter(p => p.status.toLowerCase().includes('book')).length;
-            const vacant = plots.filter(p => p.status.toLowerCase().includes('vacant') && p.color !== 'blue').length; const landowner = plots.filter(p => p.color === 'blue').length;
-            document.getElementById('count-total').innerText = total; document.getElementById('count-reg').innerText = reg; document.getElementById('count-book').innerText = book; document.getElementById('count-vacant').innerText = vacant; document.getElementById('count-landowner').innerText = landowner;
+            if (!Array.isArray(plots)) return;
+            const total = plots.length; 
+            const reg = plots.filter(p => p.status && p.status.toLowerCase().includes('reg')).length; 
+            const book = plots.filter(p => p.status && p.status.toLowerCase().includes('book')).length;
+            const vacant = plots.filter(p => p.status && p.status.toLowerCase().includes('vacant') && p.color !== 'blue').length; 
+            const landowner = plots.filter(p => p.color === 'blue').length;
+            
+            document.getElementById('count-total').innerText = total; 
+            document.getElementById('count-reg').innerText = reg; 
+            document.getElementById('count-book').innerText = book; 
+            document.getElementById('count-vacant').innerText = vacant; 
+            document.getElementById('count-landowner').innerText = landowner;
             document.getElementById('summary-bar').style.display = 'flex';
         }
 

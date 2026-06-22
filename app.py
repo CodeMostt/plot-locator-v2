@@ -1,11 +1,24 @@
-from flask import Flask, render_template, jsonify, request, session, redirect, url_for
-import csv
 import os
-import shutil
-from datetime import datetime
+from flask import Flask, render_template, jsonify, request, session, redirect, url_for
+from supabase import create_client, Client
+from dotenv import load_dotenv
+
+# Load environment variables from .env file for local development
+load_dotenv()
 
 app = Flask(__name__)
+# Replace with your actual secure secret key
 app.secret_key = "techunited_plot_locator_secure_2026"
+
+# Initialize Supabase client
+# The strings inside the quotes are the NAMES of the variables in your .env file
+SUPABASE_URL = os.environ.get("SUPABASE_URL")
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
+
+if not SUPABASE_URL or not SUPABASE_KEY:
+    raise ValueError("Supabase credentials not found. Check your .env file or Vercel Environment Variables.")
+
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # --- CONFIGURATION ---
 ADMIN_USERNAME = "admin"
@@ -19,37 +32,7 @@ CITIES_CONFIG = {
     "Jawar": ["shree_ganpati_residency"]
 }
 
-# CRITICAL: Use absolute paths for PythonAnywhere
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DATA_DIR = os.path.join(BASE_DIR, 'data')
-BACKUP_DIR = os.path.join(BASE_DIR, 'backups')
-
-# Ensure directories exist immediately on startup
-os.makedirs(DATA_DIR, exist_ok=True)
-os.makedirs(BACKUP_DIR, exist_ok=True)
-
-def get_csv_path(city, project):
-    # Ensure the city subfolder exists in data/
-    city_path = os.path.join(DATA_DIR, city)
-    os.makedirs(city_path, exist_ok=True)
-    return os.path.join(city_path, f"{project}.csv")
-
-def backup_csv(city, project, csv_path):
-    """Creates a timestamped backup of the CSV before editing."""
-    try:
-        # Create city-specific backup folder
-        city_backup_path = os.path.join(BACKUP_DIR, city)
-        os.makedirs(city_backup_path, exist_ok=True)
-        
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        backup_file = os.path.join(city_backup_path, f"{project}_{timestamp}.csv")
-        
-        if os.path.exists(csv_path):
-            shutil.copy2(csv_path, backup_file)
-            return True
-    except Exception as e:
-        print(f"Backup Error: {e}")
-    return False
+# --- ROUTES ---
 
 @app.route('/')
 def index():
@@ -81,17 +64,13 @@ def get_projects():
 
 @app.route('/get_all_plots')
 def get_all_plots():
-    city = request.args.get('city')
     project = request.args.get('project')
-    csv_path = get_csv_path(city, project)
-    plots = []
-    if os.path.exists(csv_path):
-        with open(csv_path, mode='r', encoding='utf-8') as file:
-            reader = csv.DictReader(file)
-            for row in reader:
-                plots.append({str(k).strip(): str(v).strip() for k, v in row.items() if k})
-        return jsonify(plots)
-    return jsonify({"error": "File not found"}), 404
+    try:
+        # Fetching all plots from the table corresponding to the project name
+        response = supabase.table(project).select("*").execute()
+        return jsonify(response.data)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/save_plot_details', methods=['POST'])
 def save_plot_details():
@@ -99,38 +78,23 @@ def save_plot_details():
         return jsonify({"error": "Unauthorized"}), 403
 
     data = request.json
-    city, project, plot_id = data['city'], data['project'], str(data['plot_id']).strip()
-    csv_path = get_csv_path(city, project)
-
-    if not os.path.exists(csv_path):
-        return jsonify({"error": "CSV Missing"}), 404
-
-    # Run backup
-    backup_csv(city, project, csv_path)
-
-    updated_rows = []
-    fieldnames = []
+    project = data.get('project')
+    
     try:
-        with open(csv_path, mode='r', encoding='utf-8') as file:
-            reader = csv.DictReader(file)
-            fieldnames = reader.fieldnames
-            for row in reader:
-                if str(row['plot_id']).strip() == plot_id:
-                    row.update({
-                        'status': data.get('status', row['status']),
-                        'owner': data.get('owner', row['owner']),
-                        'size': data.get('size', row['size']),
-                        'customer_number': data.get('customer_number', row['customer_number']),
-                        'booking_date': data.get('booking_date', row.get('booking_date', '')),
-                        'registry_date': data.get('registry_date', row.get('registry_date', '')),
-                        'color': data.get('color', row.get('color', ''))
-                    })
-                updated_rows.append(row)
-
-        with open(csv_path, mode='w', encoding='utf-8', newline='') as file:
-            writer = csv.DictWriter(file, fieldnames=fieldnames)
-            writer.writeheader()
-            writer.writerows(updated_rows)
+        # Update row in the specific Supabase table
+        response = supabase.table(project) \
+            .update({
+                "status": data.get('status'),
+                "owner": data.get('owner'),
+                "size": data.get('size'),
+                "customer_number": data.get('customer_number'),
+                "booking_date": data.get('booking_date'),
+                "registry_date": data.get('registry_date'),
+                "color": data.get('color')
+            }) \
+            .eq("plot_id", str(data['plot_id']).strip()) \
+            .execute()
+            
         return jsonify({"success": True})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
