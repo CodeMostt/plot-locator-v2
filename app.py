@@ -11,7 +11,8 @@ app = Flask(__name__)
 app.secret_key = "techunited_plot_locator_secure_2026"
 
 # Initialize Supabase client
-# The strings inside the quotes are the NAMES of the variables in your .env file
+# Ensure SUPABASE_URL and SUPABASE_KEY are set in your local .env 
+# AND in your Vercel Environment Variables
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
 
