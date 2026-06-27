@@ -28,7 +28,7 @@ EMPLOYEE_USERNAME = "employee_123"
 EMPLOYEE_PASSWORD = "employee"
 
 CITIES_CONFIG = {
-    "Khandwa": ["muffadal_park", "smart_city", "hi_link"],
+    "Khandwa": ["muffadal_park", "smart_city", "hi_link", "mahakali_pura"],
     "Mundi": ["mahaveer_nagar"],
     "Jawar": ["shree_ganpati_residency"]
 }
