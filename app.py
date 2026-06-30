@@ -2,22 +2,20 @@ import os
 from flask import Flask, render_template, jsonify, request, session, redirect, url_for
 from supabase import create_client, Client
 from dotenv import load_dotenv
+from datetime import datetime
 
-# Load environment variables from .env file for local development
+# Load environment variables
 load_dotenv()
 
 app = Flask(__name__)
-# Replace with your actual secure secret key
 app.secret_key = "techunited_plot_locator_secure_2026"
 
-# Initialize Supabase client
-# Ensure SUPABASE_URL and SUPABASE_KEY are set in your local .env 
-# AND in your Vercel Environment Variables
+# Initialize Supabase
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
 
 if not SUPABASE_URL or not SUPABASE_KEY:
-    raise ValueError("Supabase credentials not found. Check your .env file or Vercel Environment Variables.")
+    raise ValueError("Supabase credentials not found.")
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
@@ -32,6 +30,37 @@ CITIES_CONFIG = {
     "Mundi": ["mahaveer_nagar"],
     "Jawar": ["shree_ganpati_residency"]
 }
+
+# --- HELPERS ---
+def clean_text(val):
+    if val is None: return None
+    val = str(val).strip()
+    return None if val == "" or val.lower() == "nan" or val.lower() == "undefined" else val
+
+def clean_float(val):
+    if val is None: return None
+    val_str = str(val).strip()
+    if val_str == "" or val_str.lower() == "nan" or val_str.lower() == "undefined": return None
+    try:
+        return float(val_str)
+    except ValueError:
+        return None
+
+def normalize_date(date_str):
+    if not date_str or str(date_str).strip() == "":
+        return None
+    date_str = str(date_str).strip()
+    # Try YYYY-MM-DD
+    try:
+        datetime.strptime(date_str, '%Y-%m-%d')
+        return date_str
+    except ValueError:
+        pass
+    # Try DD/MM/YYYY
+    try:
+        return datetime.strptime(date_str, '%d/%m/%Y').strftime('%Y-%m-%d')
+    except ValueError:
+        return None 
 
 # --- ROUTES ---
 
@@ -67,7 +96,6 @@ def get_projects():
 def get_all_plots():
     project = request.args.get('project')
     try:
-        # Fetching all plots from the table corresponding to the project name
         response = supabase.table(project).select("*").execute()
         return jsonify(response.data)
     except Exception as e:
@@ -81,39 +109,21 @@ def save_plot_details():
     data = request.json
     project = data.get('project')
     
-    # --- SAFE CLEANING ---
-    raw_size = data.get('size')
-    
-    # 1. Convert to string and strip whitespace
-    size_str = str(raw_size).strip() if raw_size is not None else ""
-    
-    # 2. Try to convert to float, default to None if it fails or is empty
-    clean_size = None
-    if size_str and size_str.lower() != "nan" and size_str.lower() != "undefined":
-        try:
-            clean_size = float(size_str)
-        except ValueError:
-            clean_size = None
+    update_data = {
+        "status": clean_text(data.get('status')),
+        "owner": clean_text(data.get('owner')),
+        "size": clean_float(data.get('size')),
+        "customer_number": clean_text(data.get('customer_number')),
+        "booking_date": normalize_date(data.get('booking_date')),
+        "registry_date": normalize_date(data.get('registry_date')),
+        "color": clean_text(data.get('color'))
+    }
     
     try:
-        # Update row in the specific Supabase table
-        response = supabase.table(project) \
-            .update({
-                "status": data.get('status'),
-                "owner": data.get('owner'),
-                "size": clean_size,
-                "customer_number": data.get('customer_number'),
-                "booking_date": data.get('booking_date'),
-                "registry_date": data.get('registry_date'),
-                "color": data.get('color')
-            }) \
-            .eq("plot_id", str(data.get('plot_id', '')).strip()) \
-            .execute()
-            
+        supabase.table(project).update(update_data).eq("plot_id", str(data['plot_id']).strip()).execute()
         return jsonify({"success": True})
     except Exception as e:
-        # This will reveal the REAL database error in your Vercel logs
-        print(f"DEBUG ERROR: {str(e)}") 
+        print(f"DEBUG ERROR: {e}") 
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
