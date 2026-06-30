@@ -81,13 +81,17 @@ def save_plot_details():
     data = request.json
     project = data.get('project')
     
+    # Pre-process: Convert empty size string to None (which Supabase handles as NULL)
+    raw_size = data.get('size')
+    clean_size = float(raw_size) if raw_size and str(raw_size).strip() != "" else None
+    
     try:
         # Update row in the specific Supabase table
         response = supabase.table(project) \
             .update({
                 "status": data.get('status'),
                 "owner": data.get('owner'),
-                "size": data.get('size'),
+                "size": clean_size,  # Use the cleaned size
                 "customer_number": data.get('customer_number'),
                 "booking_date": data.get('booking_date'),
                 "registry_date": data.get('registry_date'),
