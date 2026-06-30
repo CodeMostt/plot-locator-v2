@@ -81,9 +81,19 @@ def save_plot_details():
     data = request.json
     project = data.get('project')
     
-    # Pre-process: Convert empty size string to None (which Supabase handles as NULL)
+    # --- SAFE CLEANING ---
     raw_size = data.get('size')
-    clean_size = float(raw_size) if raw_size and str(raw_size).strip() != "" else None
+    
+    # 1. Convert to string and strip whitespace
+    size_str = str(raw_size).strip() if raw_size is not None else ""
+    
+    # 2. Try to convert to float, default to None if it fails or is empty
+    clean_size = None
+    if size_str and size_str.lower() != "nan" and size_str.lower() != "undefined":
+        try:
+            clean_size = float(size_str)
+        except ValueError:
+            clean_size = None
     
     try:
         # Update row in the specific Supabase table
@@ -91,17 +101,19 @@ def save_plot_details():
             .update({
                 "status": data.get('status'),
                 "owner": data.get('owner'),
-                "size": clean_size,  # Use the cleaned size
+                "size": clean_size,
                 "customer_number": data.get('customer_number'),
                 "booking_date": data.get('booking_date'),
                 "registry_date": data.get('registry_date'),
                 "color": data.get('color')
             }) \
-            .eq("plot_id", str(data['plot_id']).strip()) \
+            .eq("plot_id", str(data.get('plot_id', '')).strip()) \
             .execute()
             
         return jsonify({"success": True})
     except Exception as e:
+        # This will reveal the REAL database error in your Vercel logs
+        print(f"DEBUG ERROR: {str(e)}") 
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
