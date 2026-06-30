@@ -98,12 +98,14 @@
     </div>
 
     <div class="admin-bar">
+        <!-- Jinja logic for Flask to render admin/employee status -->
         {% if is_admin or is_employee %}
             <span style="color:var(--registry); font-weight:bold;">● {{ 'Admin Mode' if is_admin else 'Employee Mode' }}</span> | <a href="/logout" style="color:red; text-decoration:none;">Logout</a>
         {% else %}
             <button onclick="showLoginPrompt()" style="border:none; background:none; color:var(--gold); font-weight:bold; cursor:pointer;">Login</button>
         {% endif %}
     </div>
+    
     <div class="header"><h1 onclick="goHome()">Techunited Plot Locator</h1></div>
 
     <div class="controls" id="main-controls">
@@ -176,6 +178,7 @@
     <div id="tooltip"><div id="tooltip-content"></div></div>
 
     <script>
+        // Use strict string equality to avoid VS Code Syntax Red lines
         const IS_ADMIN = "{{ 'true' if is_admin else 'false' }}" === "true";
         const IS_EMPLOYEE = "{{ 'true' if is_employee else 'false' }}" === "true";
         const VIEW_MODE = (!IS_ADMIN && !IS_EMPLOYEE);
@@ -240,7 +243,6 @@
 
             const mapArea = document.getElementById('map-area');
             
-            // Instantly hide the map area and clear old data memory
             mapArea.style.opacity = '0';
             svgOverlay.innerHTML = '';
             activePoly = null;
@@ -250,23 +252,19 @@
             document.getElementById('nav-controls').style.display = 'block';
             mapArea.style.display = 'block';
 
-            // Fetch the new Supabase data via Flask
             fetch(`/get_all_plots?city=${citySel.value}&project=${projSel.value}`)
             .then(res => res.json())
             .then(plots => {
-                // Ensure data is valid before processing
                 if (Array.isArray(plots)) {
                     lastFetchedPlots = plots; 
                     document.getElementById('search-area').style.display = 'flex';
                     updateSummary(plots); 
                     
-                    // Swap the image AND render plots invisibly, then fade in
                     mapImg.onload = () => {
                         renderPlots(plots);
                         mapArea.style.opacity = '1';
                     };
                     
-                    // Use Supabase Storage URL
                     mapImg.src = `https://jpeezqoinwzrruknbsmy.supabase.co/storage/v1/object/public/project-maps/${citySel.value}/${projSel.value}/map.png`;
                     if(mapImg.complete) mapImg.onload();
                 } else {
@@ -305,7 +303,7 @@
         function renderPlots(plots) {
             svgOverlay.innerHTML = ''; svgOverlay.setAttribute('viewBox', `0 0 ${mapImg.naturalWidth} ${mapImg.naturalHeight}`);
             plots.forEach(plot => {
-                if(!plot.coords) return; // Skip if no coordinates exist
+                if(!plot.coords) return;
                 const poly = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
                 poly.setAttribute("points", plot.coords); const colors = getColor(plot.status, plot.color);
                 poly.setAttribute("fill", colors.fill); poly.setAttribute("stroke", colors.color); poly.setAttribute("stroke-width", "1");
@@ -399,8 +397,32 @@
         }
 
         function saveDetails() {
-            const body = { city: citySel.value, project: projSel.value, plot_id: currentPlotData.plot_id, size: document.getElementById('edit-size').value, status: document.getElementById('edit-status').value, color: document.getElementById('edit-color').value, owner: document.getElementById('edit-owner').value, customer_number: document.getElementById('edit-num').value, booking_date: document.getElementById('edit-book').value, registry_date: document.getElementById('edit-reg').value };
-            fetch('/save_plot_details', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body) }).then(res => res.json()).then(res => { if(res.success) { closeTooltip(); loadMap(); } });
+            const body = { 
+                project: projSel.value, // Exactly matches app.py dictionary requirement
+                plot_id: currentPlotData.plot_id, 
+                size: document.getElementById('edit-size').value, 
+                status: document.getElementById('edit-status').value, 
+                color: document.getElementById('edit-color').value, 
+                owner: document.getElementById('edit-owner').value, 
+                customer_number: document.getElementById('edit-num').value, 
+                booking_date: document.getElementById('edit-book').value, 
+                registry_date: document.getElementById('edit-reg').value 
+            };
+            
+            fetch('/save_plot_details', { 
+                method: 'POST', 
+                headers: {'Content-Type': 'application/json'}, 
+                body: JSON.stringify(body) 
+            })
+            .then(res => res.json())
+            .then(res => { 
+                if(res.success) { 
+                    closeTooltip(); 
+                    loadMap(); 
+                } else {
+                    alert("Error saving details. Check logs.");
+                }
+            });
         }
 
         function closeTooltip() { isLocked = false; if (activePoly) resetPolygon(activePoly); tooltip.style.display = 'none'; overlay.style.display = 'none'; tooltip.classList.remove('is-centered'); document.body.classList.remove('no-scroll'); document.getElementById('tooltip-content').style.transform = 'none'; }
