@@ -19,6 +19,9 @@ if not SUPABASE_URL or not SUPABASE_KEY:
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
+app.config['TEMPLATES_AUTO_RELOAD'] = True
+app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
+
 # --- CONFIGURATION ---
 ADMIN_USERNAME = "admin"
 ADMIN_PASSWORD = "password123"
