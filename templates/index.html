@@ -5,13 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
     <title>Techunited - Plot Locator V2</title>
 
-    <!-- ADD THIS LINE FOR THE TAB LOGO -->
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
     <style>
         :root {
             --gold: #D4AF37; --registry: #2ecc71; --booked: #f1c40f;
             --vacant: #e74c3c; --edit: #3498db; --bg: #f4f7f6;
-            --landowner: #3498db; --developer: #2c3e50;
+            --landowner: #4a4a4a; --developer: #2c3e50;
             --whatsapp: #25D366;
         }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 10px; text-align: center; }
@@ -90,6 +89,18 @@
     </style>
 </head>
 <body>
+    <!-- 60-DEGREE STRIPE PATTERN FOR LAND OWNER PLOTS -->
+    <svg width="0" height="0" style="position:absolute; pointer-events:none; z-index:-1;">
+        <defs>
+            <pattern id="owner-pattern" width="12" height="12" patternTransform="rotate(60)" patternUnits="userSpaceOnUse">
+                <!-- Changed fill to white (#ffffff) -->
+                <rect width="12" height="12" fill="#ffffff" />
+                <!-- Black lines -->
+                <line x1="0" y1="0" x2="0" y2="12" stroke="#000000" stroke-width="4" />
+            </pattern>
+        </defs>
+    </svg>
+
     <div id="modal-overlay" onclick="closeAllModals()"></div>
 
     <div id="login-modal">
@@ -101,7 +112,6 @@
     </div>
 
     <div class="admin-bar">
-        <!-- Jinja logic for Flask to render admin/employee status -->
         {% if is_admin or is_employee %}
             <span style="color:var(--registry); font-weight:bold;">● {{ 'Admin Mode' if is_admin else 'Employee Mode' }}</span> | <a href="/logout" style="color:red; text-decoration:none;">Logout</a>
         {% else %}
@@ -128,42 +138,34 @@
     <div id="landing-projects">
         <div class="gallery-title">Featured Projects</div>
         <div class="project-grid">
-            
             <div class="project-card" onclick="quickLoad('Khandwa', 'muffadal_park')">
                 <img src="https://jpeezqoinwzrruknbsmy.supabase.co/storage/v1/object/public/project-maps/Khandwa/muffadal_park/map.png" onerror="this.src='https://placehold.co/400x250?text=Listing'">
                 <div class="project-info"><span class="project-name">Muffadal Park</span><span class="project-city">Khandwa</span></div>
             </div>
-
             <div class="project-card" onclick="quickLoad('Khandwa', 'smart_city')">
                 <img src="https://jpeezqoinwzrruknbsmy.supabase.co/storage/v1/object/public/project-maps/Khandwa/smart_city/map.png" onerror="this.src='https://placehold.co/400x250?text=Listing'">
                 <div class="project-info"><span class="project-name">Smart City</span><span class="project-city">Khandwa</span></div>
             </div>
-
             <div class="project-card" onclick="quickLoad('Khandwa', 'hi_link')">
                 <img src="https://jpeezqoinwzrruknbsmy.supabase.co/storage/v1/object/public/project-maps/Khandwa/hi_link/map.png" onerror="this.src='https://placehold.co/400x250?text=Listing'">
                 <div class="project-info"><span class="project-name">Hi Link City</span><span class="project-city">Khandwa</span></div>
             </div>
-
             <div class="project-card" onclick="quickLoad('Khandwa', 'mahakali_puram')">
                 <img src="https://jpeezqoinwzrruknbsmy.supabase.co/storage/v1/object/public/project-maps/Khandwa/mahakali_puram/map.png" onerror="this.src='https://placehold.co/400x250?text=Listing'">
                 <div class="project-info"><span class="project-name">Mahakali Puram</span><span class="project-city">Khandwa</span></div>
             </div>
-
             <div class="project-card" onclick="quickLoad('Khandwa', 'keshav_nagar')">
                 <img src="https://jpeezqoinwzrruknbsmy.supabase.co/storage/v1/object/public/project-maps/Khandwa/keshav_nagar/map.png" onerror="this.src='https://placehold.co/400x250?text=Listing'">
                 <div class="project-info"><span class="project-name">Keshav Nagar</span><span class="project-city">Khandwa</span></div>
             </div>
-
             <div class="project-card" onclick="quickLoad('Mundi', 'mahaveer_nagar')">
                 <img src="https://jpeezqoinwzrruknbsmy.supabase.co/storage/v1/object/public/project-maps/Mundi/mahaveer_nagar/map.png" onerror="this.src='https://placehold.co/400x250?text=Listing'">
                 <div class="project-info"><span class="project-name">Mahaveer Nagar</span><span class="project-city">Mundi</span></div>
             </div>
-
             <div class="project-card" onclick="quickLoad('Jawar', 'shree_ganpati_residency')">
                 <img src="https://jpeezqoinwzrruknbsmy.supabase.co/storage/v1/object/public/project-maps/Jawar/shree_ganpati_residency/map.png" onerror="this.src='https://placehold.co/400x250?text=Listing'">
                 <div class="project-info"><span class="project-name">Shree Ganpati Residency</span><span class="project-city">Jawar</span></div>
             </div>
-
         </div>
     </div>
 
@@ -180,13 +182,11 @@
         <div class="summary-card" style="border-bottom-color:var(--registry)"><small>Registry</small><b id="count-reg">0</b></div>
         <div class="summary-card" style="border-bottom-color:var(--booked)"><small>Booked</small><b id="count-book">0</b></div>
         <div class="summary-card" style="border-bottom-color:var(--vacant)"><small>Vacant</small><b id="count-vacant">0</b></div>
-        <div class="summary-card" style="border-bottom-color:var(--landowner)"><small>Land Owner</small><b id="count-landowner">0</b></div>
     </div>
 
     <div id="tooltip"><div id="tooltip-content"></div></div>
 
     <script>
-        // Use strict string equality to avoid VS Code Syntax Red lines
         const IS_ADMIN = "{{ 'true' if is_admin else 'false' }}" === "true";
         const IS_EMPLOYEE = "{{ 'true' if is_employee else 'false' }}" === "true";
         const VIEW_MODE = (!IS_ADMIN && !IS_EMPLOYEE);
@@ -283,7 +283,7 @@
         }
 
         function getColor(status, manualColor) {
-            if (manualColor === 'blue') return { color: "#3498db", fill: "rgba(52, 152, 219, 0.4)" };
+            if (manualColor === 'blue') return { color: "#1a1a1a", fill: "url(#owner-pattern)" };
             const s = status ? status.toLowerCase() : "";
             if (s.includes('reg')) return { color: "#2ecc71", fill: "rgba(46, 204, 113, 0.4)" };
             if (s.includes('book')) return { color: "#f1c40f", fill: "rgba(241, 196, 15, 0.4)" };
@@ -293,7 +293,12 @@
         function highlightPolygon(poly, status, manualColor) {
             if (activePoly && activePoly !== poly) resetPolygon(activePoly);
             activePoly = poly; const colors = getColor(status, manualColor);
-            poly.setAttribute("fill", colors.fill.replace("0.4", "0.7").replace("0.2", "0.7"));
+            
+            if (manualColor === 'blue') {
+                poly.setAttribute("fill", colors.fill);
+            } else {
+                poly.setAttribute("fill", colors.fill.replace("0.4", "0.7").replace("0.2", "0.7"));
+            }
             poly.setAttribute("stroke", colors.color); poly.setAttribute("stroke-width", "4");
         }
 
@@ -317,7 +322,11 @@
                 poly.setAttribute("fill", colors.fill); poly.setAttribute("stroke", colors.color); poly.setAttribute("stroke-width", "1");
                 poly.id = "poly-" + String(plot.plot_id).trim();
 
-                if (!VIEW_MODE) {
+                const isBlue = plot.color === 'blue';
+                const isVacant = plot.status && plot.status.toLowerCase().includes('vac') && !isBlue;
+                const canInteract = !VIEW_MODE || isVacant;
+
+                if (canInteract) {
                     poly.onclick = (e) => { isLocked = true; highlightPolygon(poly, plot.status, plot.color); showInfo(plot, e.clientX, e.clientY); };
                     
                     if (IS_ADMIN) {
@@ -339,27 +348,38 @@
 
         function showInfo(data, x, y) {
             currentPlotData = data; const isBlue = data.color === 'blue'; const colors = getColor(data.status, data.color);
-            let content = `<div class="t-header-row"><span class="t-value" style="color:var(--gold); font-size:1.4rem;">Plot #${data.plot_id}</span><button onclick="closeTooltip()">DONE</button></div><div class="t-body-content"><span class="t-label">Type</span><span class="t-value">${isBlue ? "Land Owner" : "Developer Owned"}</span><span class="t-label">Size</span><span class="t-value">${data.size || 'N/A'}</span>`;
             
-            if (!isBlue) content += `<span class="t-label">Status</span><span class="t-value" style="color:${colors.color}">${data.status || 'N/A'}</span>`;
-            content += `<span class="t-label">Owner</span><span class="t-value">${data.owner || 'N/A'}</span>`;
+            let content = `<div class="t-header-row"><span class="t-value" style="color:var(--gold); font-size:1.4rem;">Plot #${data.plot_id}</span><button onclick="closeTooltip()">DONE</button></div><div class="t-body-content">`;
             
-            if (data.status && !data.status.toLowerCase().includes('vac')) {
-                let phone = data.customer_number || 'N/A'; 
-                content += `<span class="t-label">Contact Number</span><span class="t-value">${phone}</span>`;
-                
-                if(phone !== 'N/A' && window.innerWidth < 768) {
-                    content += `
-                    <div class="mobile-actions">
-                        <a href="tel:${phone}" class="btn-action" style="background:#27ae60;">Call</a>
-                        <a href="https://wa.me/${phone}?text=Inquiry for Plot ${data.plot_id}" target="_blank" class="btn-action" style="background:#25D366;">WhatsApp</a>
-                    </div>`;
-                }
-                if(data.booking_date) content += `<span class="t-label">Booking Date</span><span class="t-value">${data.booking_date}</span>`;
+            if (!VIEW_MODE) {
+                content += `<span class="t-label">Type</span><span class="t-value">${isBlue ? "Land Owner" : "Developer Owned"}</span>`;
             }
-            if (data.registry_date) content += `<span class="t-label">Registry Date</span><span class="t-value">${data.registry_date}</span>`;
+
+            content += `<span class="t-label">Size</span><span class="t-value">${data.size || 'N/A'}</span>`;
+            if (!isBlue) content += `<span class="t-label">Status</span><span class="t-value" style="color:${colors.color}">${data.status || 'N/A'}</span>`;
             
-            if (IS_ADMIN) content += `<button onclick="startEdit(currentPlotData)" style="width:100%; margin-top:20px; padding:12px; background:var(--edit); color:white; border:none; border-radius:8px; cursor:pointer; font-weight:bold;">Edit Details</button>`;
+            if (!VIEW_MODE) {
+                if (!isBlue) {
+                    content += `<span class="t-label">Owner</span><span class="t-value">${data.owner || 'N/A'}</span>`;
+                }
+                
+                if (data.status && !data.status.toLowerCase().includes('vac')) {
+                    let phone = data.customer_number || 'N/A'; 
+                    content += `<span class="t-label">Contact Number</span><span class="t-value">${phone}</span>`;
+                    
+                    if(phone !== 'N/A' && window.innerWidth < 768) {
+                        content += `
+                        <div class="mobile-actions">
+                            <a href="tel:${phone}" class="btn-action" style="background:#27ae60;">Call</a>
+                            <a href="https://wa.me/${phone}?text=Inquiry for Plot ${data.plot_id}" target="_blank" class="btn-action" style="background:#25D366;">WhatsApp</a>
+                        </div>`;
+                    }
+                    if(data.booking_date) content += `<span class="t-label">Booking Date</span><span class="t-value">${data.booking_date}</span>`;
+                }
+                if (data.registry_date) content += `<span class="t-label">Registry Date</span><span class="t-value">${data.registry_date}</span>`;
+                
+                if (IS_ADMIN) content += `<button onclick="startEdit(currentPlotData)" style="width:100%; margin-top:20px; padding:12px; background:var(--edit); color:white; border:none; border-radius:8px; cursor:pointer; font-weight:bold;">Edit Details</button>`;
+            }
             
             document.getElementById('tooltip-content').innerHTML = content + '</div>';
             tooltip.style.display = 'block';
@@ -391,7 +411,7 @@
                     <span class="t-label">Color</span>
                     <select id="edit-color" class="edit-input">
                         <option value="">Default</option>
-                        <option value="blue" ${data.color === 'blue' ? 'selected' : ''}>Blue (Owner)</option>
+                        <option value="blue" ${data.color === 'blue' ? 'selected' : ''}>Land Owner (Stripe Pattern)</option>
                     </select>
                     <span class="t-label">Owner</span><input type="text" id="edit-owner" value="${data.owner || ''}" class="edit-input">
                     <span class="t-label">Number</span><input type="text" id="edit-num" value="${data.customer_number || ''}" class="edit-input">
@@ -406,7 +426,7 @@
 
         function saveDetails() {
             const body = { 
-                project: projSel.value, // Exactly matches app.py dictionary requirement
+                project: projSel.value,
                 plot_id: currentPlotData.plot_id, 
                 size: document.getElementById('edit-size').value, 
                 status: document.getElementById('edit-status').value, 
@@ -437,24 +457,37 @@
 
         function updateSummary(plots) {
             if (!Array.isArray(plots)) return;
-            const total = plots.length; 
+            
+            const validPlots = plots.filter(p => p.color !== 'blue');
+            const total = validPlots.length; 
+            
             const reg = plots.filter(p => p.status && p.status.toLowerCase().includes('reg')).length; 
             const book = plots.filter(p => p.status && p.status.toLowerCase().includes('book')).length;
             const vacant = plots.filter(p => p.status && p.status.toLowerCase().includes('vacant') && p.color !== 'blue').length; 
-            const landowner = plots.filter(p => p.color === 'blue').length;
             
             document.getElementById('count-total').innerText = total; 
             document.getElementById('count-reg').innerText = reg; 
             document.getElementById('count-book').innerText = book; 
             document.getElementById('count-vacant').innerText = vacant; 
-            document.getElementById('count-landowner').innerText = landowner;
             document.getElementById('summary-bar').style.display = 'flex';
         }
 
         function searchPlot() {
             const searchId = document.getElementById('plot-search').value.trim();
             const match = lastFetchedPlots.find(p => String(p.plot_id).trim() === searchId);
-            if (match && !VIEW_MODE) { isLocked = true; const poly = document.getElementById("poly-" + searchId); highlightPolygon(poly, match.status, match.color); showInfo(match, window.innerWidth/2, window.innerHeight/2); }
+            
+            if (match) {
+                const isBlue = match.color === 'blue';
+                const isVacant = match.status && match.status.toLowerCase().includes('vac') && !isBlue;
+                const canInteract = !VIEW_MODE || isVacant;
+                
+                if (canInteract) {
+                    isLocked = true; 
+                    const poly = document.getElementById("poly-" + searchId); 
+                    highlightPolygon(poly, match.status, match.color); 
+                    showInfo(match, window.innerWidth/2, window.innerHeight/2); 
+                }
+            }
         }
     </script>
 </body>
