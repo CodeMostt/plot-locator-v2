@@ -111,6 +111,15 @@
         <button onclick="closeAllModals()" style="background:none; border:none; color:gray; cursor:pointer; margin-top:15px;">Cancel</button>
     </div>
 
+    <!-- The Garden Image Viewer Modal -->
+    <div id="image-modal" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 2147483647; background: white; padding: 15px; border-radius: 12px; box-shadow: 0 15px 50px rgba(0,0,0,0.5); text-align: center; width: 90vw; max-width: 800px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <h3 style="margin: 0; color: var(--developer);" id="garden-title">Garden View</h3>
+            <button onclick="closeAllModals()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #e74c3c;">&times;</button>
+        </div>
+        <img id="garden-img" src="" alt="Garden Image" style="width: 100%; max-height: 70vh; object-fit: contain; border-radius: 8px;">
+    </div>
+
     <div class="admin-bar">
         {% if is_admin or is_employee %}
             <span style="color:var(--registry); font-weight:bold;">● {{ 'Admin Mode' if is_admin else 'Employee Mode' }}</span> | <a href="/logout" style="color:red; text-decoration:none;">Logout</a>
@@ -197,7 +206,12 @@
         let isLocked = false, currentPlotData = null, activePoly = null, lastFetchedPlots = [], hideTimer;
 
         function showLoginPrompt() { document.getElementById('login-modal').style.display = 'block'; overlay.style.display = 'block'; }
-        function closeAllModals() { document.getElementById('login-modal').style.display = 'none'; closeTooltip(); }
+        
+        function closeAllModals() { 
+            document.getElementById('login-modal').style.display = 'none'; 
+            document.getElementById('image-modal').style.display = 'none';
+            closeTooltip(); 
+        }
 
         function submitLogin() {
             const user = document.getElementById('login-user').value;
@@ -324,10 +338,23 @@
 
                 const isBlue = plot.color === 'blue';
                 const isVacant = plot.status && plot.status.toLowerCase().includes('vac') && !isBlue;
-                const canInteract = !VIEW_MODE || isVacant;
+                const isGarden = String(plot.plot_id).toLowerCase().includes('garden');
+                
+                // Allow interaction if logged in, if the plot is vacant, OR if it is a garden
+                const canInteract = !VIEW_MODE || isVacant || isGarden;
 
                 if (canInteract) {
-                    poly.onclick = (e) => { isLocked = true; highlightPolygon(poly, plot.status, plot.color); showInfo(plot, e.clientX, e.clientY); };
+                    poly.onclick = (e) => { 
+                        isLocked = true; 
+                        highlightPolygon(poly, plot.status, plot.color); 
+                        
+                        // If the ID contains "garden", show the image. Otherwise, show normal details.
+                        if (isGarden) {
+                            showGardenImage(plot.plot_id);
+                        } else {
+                            showInfo(plot, e.clientX, e.clientY); 
+                        }
+                    };
                     
                     if (IS_ADMIN) {
                         poly.oncontextmenu = (e) => {
@@ -336,7 +363,14 @@
                     }
 
                     poly.onmouseenter = (e) => { 
-                        if (!isLocked && window.innerWidth >= 768) { clearTimeout(hideTimer); highlightPolygon(poly, plot.status, plot.color); showInfo(plot, e.clientX, e.clientY); } 
+                        if (!isLocked && window.innerWidth >= 768) { 
+                            clearTimeout(hideTimer); 
+                            highlightPolygon(poly, plot.status, plot.color); 
+                            // Only show the detail tooltip if it's NOT a garden
+                            if (!isGarden) {
+                                showInfo(plot, e.clientX, e.clientY); 
+                            }
+                        } 
                     };
                     poly.onmouseleave = () => { 
                         if (!isLocked && window.innerWidth >= 768) { hideTimer = setTimeout(() => { if (!tooltip.matches(':hover')) closeTooltip(); }, 200); } 
@@ -479,15 +513,36 @@
             if (match) {
                 const isBlue = match.color === 'blue';
                 const isVacant = match.status && match.status.toLowerCase().includes('vac') && !isBlue;
-                const canInteract = !VIEW_MODE || isVacant;
+                const isGarden = String(match.plot_id).toLowerCase().includes('garden');
+                const canInteract = !VIEW_MODE || isVacant || isGarden;
                 
                 if (canInteract) {
                     isLocked = true; 
                     const poly = document.getElementById("poly-" + searchId); 
                     highlightPolygon(poly, match.status, match.color); 
-                    showInfo(match, window.innerWidth/2, window.innerHeight/2); 
+                    if (isGarden) {
+                        showGardenImage(match.plot_id);
+                    } else {
+                        showInfo(match, window.innerWidth/2, window.innerHeight/2); 
+                    }
                 }
             }
+        }
+
+        function showGardenImage(gardenId) {
+            // Clean up the ID to make it look nice for the title
+            document.getElementById('garden-title').innerText = gardenId.replace(/_/g, ' ').toUpperCase();
+            
+            // Explicitly use .jpeg as requested
+            const imgUrl = `https://jpeezqoinwzrruknbsmy.supabase.co/storage/v1/object/public/project-maps/${citySel.value}/${projSel.value}/${gardenId}.jpeg`;
+            
+            document.getElementById('garden-img').src = imgUrl;
+            
+            // HIDE THE STANDARD TOOLTIP if it's open
+            document.getElementById('tooltip').style.display = 'none';
+            
+            document.getElementById('image-modal').style.display = 'block';
+            overlay.style.display = 'block';
         }
     </script>
 </body>
