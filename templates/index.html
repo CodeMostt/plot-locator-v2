@@ -915,6 +915,7 @@
             display: block;
             max-width: none;
             pointer-events: none;
+            vertical-align: top;
         }
 
         #svg-overlay {
@@ -924,6 +925,7 @@
             width: 100%;
             height: 100%;
             pointer-events: none;
+            overflow: visible;
         }
 
         polygon {
@@ -1893,7 +1895,8 @@
         }
 
         function zoomMap(factor) {
-            const newScale = Math.min(Math.max(0.3, scale * factor), 5.0);
+            const minScale = Math.min(scale * 0.4, 0.05);
+            const newScale = Math.min(Math.max(minScale, scale * factor), 5.0);
             const rect = viewport.getBoundingClientRect();
             const cx = rect.width / 2;
             const cy = rect.height / 2;
@@ -2099,6 +2102,8 @@
             activePoly = null;
             lastFetchedPlots = [];
 
+            const targetSrc = `https://jpeezqoinwzrruknbsmy.supabase.co/storage/v1/object/public/project-maps/${citySel.value}/${projSel.value}/map.png`;
+
             fetch(`/get_all_plots?city=${citySel.value}&project=${projSel.value}`)
             .then(res => res.json())
             .then(plots => {
@@ -2106,13 +2111,17 @@
                     lastFetchedPlots = plots;
                     updateSummary(plots);
 
-                    mapImg.onload = () => {
+                    const onImageReady = () => {
                         renderPlots(plots);
                         resetMapView();
                     };
 
-                    mapImg.src = `https://jpeezqoinwzrruknbsmy.supabase.co/storage/v1/object/public/project-maps/${citySel.value}/${projSel.value}/map.png`;
-                    if (mapImg.complete) mapImg.onload();
+                    if (mapImg.src === targetSrc && mapImg.complete && mapImg.naturalWidth > 0) {
+                        onImageReady();
+                    } else {
+                        mapImg.onload = onImageReady;
+                        mapImg.src = targetSrc;
+                    }
                 } else {
                     console.error("Data error:", plots);
                     showToast("Error loading colony plot layout data.");
@@ -2173,8 +2182,27 @@
 
         // --- RENDER PLOT OVERLAYS ---
         function renderPlots(plots) {
+            const w = mapImg.naturalWidth;
+            const h = mapImg.naturalHeight;
+            if (!w || !h) return;
+
+            // Lock container, image, and SVG overlay to the exact same pixel dimensions
+            mapLayer.style.width = w + 'px';
+            mapLayer.style.height = h + 'px';
+
+            mapImg.style.width = w + 'px';
+            mapImg.style.height = h + 'px';
+            mapImg.setAttribute('width', w);
+            mapImg.setAttribute('height', h);
+
+            svgOverlay.style.width = w + 'px';
+            svgOverlay.style.height = h + 'px';
+            svgOverlay.setAttribute('width', w);
+            svgOverlay.setAttribute('height', h);
+            svgOverlay.setAttribute('viewBox', `0 0 ${w} ${h}`);
+            svgOverlay.setAttribute('preserveAspectRatio', 'none');
+
             svgOverlay.innerHTML = '';
-            svgOverlay.setAttribute('viewBox', `0 0 ${mapImg.naturalWidth} ${mapImg.naturalHeight}`);
 
             plots.forEach(plot => {
                 if (!plot.coords) return;
