@@ -1906,12 +1906,14 @@
             updateTransform();
         }
 
-        function resetMapView() {
-            if (!mapImg.naturalWidth) return;
+        function resetMapView(customW, customH) {
+            const iWidth = customW || mapImg.naturalWidth;
+            const iHeight = customH || mapImg.naturalHeight;
+            if (!iWidth || !iHeight) return;
+
             const vRect = viewport.getBoundingClientRect();
-            const iWidth = mapImg.naturalWidth;
-            const iHeight = mapImg.naturalHeight;
-            
+            if (!vRect.width || !vRect.height) return;
+
             const scaleX = vRect.width / iWidth;
             const scaleY = vRect.height / iHeight;
             scale = Math.min(scaleX, scaleY, 1.0);
@@ -2061,6 +2063,11 @@
             document.getElementById('workspace-view').style.display = 'none';
             citySel.value = "";
             projSel.disabled = true;
+            mapImg.src = "";
+            mapImg.removeAttribute('style');
+            mapLayer.removeAttribute('style');
+            svgOverlay.removeAttribute('style');
+            svgOverlay.innerHTML = "";
             closeAllModals();
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
@@ -2098,30 +2105,42 @@
             document.getElementById('display-project-name').innerText = projSel.value.replace(/_/g, ' ').toUpperCase();
             document.getElementById('display-city-name').innerText = citySel.value;
 
+            // Clear previous plots and reset any old dimensions
             svgOverlay.innerHTML = '';
             activePoly = null;
             lastFetchedPlots = [];
 
-            const targetSrc = `https://jpeezqoinwzrruknbsmy.supabase.co/storage/v1/object/public/project-maps/${citySel.value}/${projSel.value}/map.png`;
+            const currentCity = citySel.value;
+            const currentProj = projSel.value;
+            const targetSrc = `https://jpeezqoinwzrruknbsmy.supabase.co/storage/v1/object/public/project-maps/${currentCity}/${currentProj}/map.png`;
 
-            fetch(`/get_all_plots?city=${citySel.value}&project=${projSel.value}`)
+            fetch(`/get_all_plots?city=${currentCity}&project=${currentProj}`)
             .then(res => res.json())
             .then(plots => {
                 if (Array.isArray(plots)) {
                     lastFetchedPlots = plots;
                     updateSummary(plots);
 
-                    const onImageReady = () => {
-                        renderPlots(plots);
-                        resetMapView();
-                    };
+                    // Preload via a fresh Image object to guarantee accurate natural dimensions
+                    const imgLoader = new Image();
+                    imgLoader.crossOrigin = "anonymous";
+                    imgLoader.onload = () => {
+                        // Ensure user hasn't switched to a different colony in the meantime
+                        if (projSel.value !== currentProj) return;
 
-                    if (mapImg.src === targetSrc && mapImg.complete && mapImg.naturalWidth > 0) {
-                        onImageReady();
-                    } else {
-                        mapImg.onload = onImageReady;
+                        const w = imgLoader.naturalWidth;
+                        const h = imgLoader.naturalHeight;
+                        if (!w || !h) return;
+
                         mapImg.src = targetSrc;
-                    }
+                        renderPlots(plots, w, h);
+
+                        // Allow mobile browser layout pass to finish before positioning
+                        requestAnimationFrame(() => {
+                            resetMapView(w, h);
+                        });
+                    };
+                    imgLoader.src = targetSrc;
                 } else {
                     console.error("Data error:", plots);
                     showToast("Error loading colony plot layout data.");
@@ -2181,9 +2200,9 @@
         }
 
         // --- RENDER PLOT OVERLAYS ---
-        function renderPlots(plots) {
-            const w = mapImg.naturalWidth;
-            const h = mapImg.naturalHeight;
+        function renderPlots(plots, customW, customH) {
+            const w = customW || mapImg.naturalWidth;
+            const h = customH || mapImg.naturalHeight;
             if (!w || !h) return;
 
             // Lock container, image, and SVG overlay to the exact same pixel dimensions
