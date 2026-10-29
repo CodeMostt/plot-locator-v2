@@ -3,259 +3,1827 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
-    <title>Techunited - Plot Locator V2</title>
+    <title>Techunited — Interactive Colony Plot Locator</title>
 
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
     <style>
         :root {
-            --gold: #D4AF37; --registry: #2ecc71; --booked: #f1c40f;
-            --vacant: #e74c3c; --edit: #3498db; --bg: #f4f7f6;
-            --landowner: #4a4a4a; --developer: #2c3e50;
-            --whatsapp: #25D366;
-        }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 10px; text-align: center; }
-        .admin-bar { text-align: right; padding: 5px 10px; font-size: 0.8rem; background: white; margin-bottom: 10px; border-radius: 8px; }
-        .header h1 { color: #2c3e50; font-size: 1.6rem; margin: 15px 0; cursor: pointer; }
-        
-        #login-modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 15px; box-shadow: 0 15px 50px rgba(0,0,0,0.3); z-index: 2147483647; width: 300px; box-sizing: border-box; }
-        .login-input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
-        .btn-login-submit { width: 100%; background: var(--developer); color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; }
-
-        .controls { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-bottom: 20px; }
-        .row { display: flex; justify-content: center; gap: 8px; width: 100%; max-width: 600px; flex-wrap: wrap; }
-        select, input { padding: 12px; border-radius: 8px; border: 1px solid #ddd; width: 45%; outline: none; font-size: 0.95rem; }
-        #plot-search { width: 60%; }
-        .btn-search { background: var(--gold); color: white; border: none; padding: 12px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; }
-
-        .gallery-title { font-size: 1.1rem; color: #7f8c8d; margin-top: 20px; font-weight: bold; text-transform: uppercase; }
-        .project-grid { display: flex; justify-content: center; gap: 15px; flex-wrap: wrap; margin: 20px auto; max-width: 1000px; }
-        .project-card { background: white; border-radius: 12px; width: 220px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.1); cursor: pointer; transition: transform 0.2s; }
-        .project-card:hover { transform: translateY(-5px); }
-        .project-card img { width: 100%; height: 130px; object-fit: cover; border-bottom: 2px solid var(--gold); }
-        
-        .project-info { padding: 10px; text-align: left; }
-        .project-name { font-size: 1rem; font-weight: bold; color: #34495e; display: block; margin-bottom: 2px; }
-        .project-city { font-size: 0.8rem; color: #95a5a6; display: block; font-weight: 600; }
-
-        .nav-controls { display: none; margin-bottom: 15px; }
-        .btn-back { background: #95a5a6; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; margin-bottom: 10px; }
-        
-        .map-section { 
-            display: none; 
-            margin: 0 auto; 
-            max-width: 1200px; 
-            border: 2px solid var(--gold); 
-            border-radius: 12px; 
-            position: relative; 
-            overflow: hidden; 
-            background: white; 
-            transition: opacity 0.3s ease-in-out; 
-        }
-        
-        #map-image { width: 100%; height: auto; display: block; }
-        #svg-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; pointer-events: none; }
-        polygon { pointer-events: auto; cursor: pointer; transition: fill 0.2s; }
-        
-        #modal-overlay { display: none; position: absolute; top: 0; left: 0; z-index: 2147483646; }
-        #tooltip { position: absolute; display: none; background: white; z-index: 2147483647; text-align: left; border-top: 10px solid var(--gold); box-sizing: border-box; }
-        
-        .summary-bar { display: none; justify-content: center; gap: 8px; margin-top: 15px; flex-wrap: wrap; }
-        .summary-card { background: white; padding: 8px; border-radius: 8px; border-bottom: 3px solid #ddd; min-width: 90px; flex: 1; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .summary-card b { font-size: 1.1rem; color: #2c3e50; display: block; }
-        .summary-card small { font-size: 0.6rem; text-transform: uppercase; color: #7f8c8d; font-weight: bold; }
-
-        @media (min-width: 768px) {
-            #tooltip { width: 350px; border-radius: 15px; position: fixed !important; max-height: 85vh; overflow-y: auto; pointer-events: none; }
-            #modal-overlay { position: fixed !important; background: rgba(0,0,0,0.4) !important; backdrop-filter: blur(2px); width: 100vw; height: 100vh; }
-            #tooltip.is-centered { left: 50% !important; top: 50% !important; transform: translate(-50%, -50%) !important; pointer-events: auto !important; }
-        }
-        @media (max-width: 767px) {
-            .project-grid { justify-content: center; flex-wrap: wrap; overflow-x: hidden; padding: 10px; gap: 10px; }
-            .project-card { flex: 0 0 calc(50% - 15px); width: calc(50% - 15px); min-width: 140px; }
-            .project-card img { height: 100px; }
-            .project-name { font-size: 0.9rem; }
+            --primary: #0F172A;
+            --primary-light: #1E293B;
+            --accent-gold: #D97706;
+            --accent-gold-light: #FEF3C7;
+            --accent-gold-hover: #B45309;
             
-            #tooltip { width: 100vw; height: 100vh; border-radius: 0; padding: 0; overflow-y: hidden !important; }
-            #modal-overlay { background: white !important; width: 100vw; height: 100vh; }
-            body.no-scroll { overflow: hidden !important; touch-action: none; position: fixed; width: 100%; }
-            .mobile-actions { display: flex; gap: 10px; margin-top: 15px; justify-content: space-between; }
-            .btn-action { flex: 1; text-decoration: none; color: white; padding: 12px; border-radius: 8px; font-size: 0.9rem; font-weight: bold; display: flex; align-items: center; justify-content: center; }
+            /* Status Colors: Vacant -> Red, Registry -> Green, Booked -> Yellow */
+            --vacant: #EF4444;
+            --vacant-bg: #FEF2F2;
+            --vacant-border: #DC2626;
+            
+            --registry: #10B981;
+            --registry-bg: #ECFDF5;
+            --registry-border: #059669;
+            
+            --booked: #EAB308;
+            --booked-bg: #FEFCE8;
+            --booked-border: #CA8A04;
+            
+            --landowner: #475569;
+            --whatsapp: #25D366;
+            --bg-main: #F8FAFC;
+            --surface: #FFFFFF;
+            --border-subtle: #E2E8F0;
+            --border-medium: #CBD5E1;
+            --text-primary: #0F172A;
+            --text-secondary: #64748B;
+            --text-muted: #94A3B8;
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 18px;
+            --radius-xl: 24px;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+            --shadow-md: 0 4px 16px -2px rgba(15,23,42,0.08), 0 2px 6px -2px rgba(15,23,42,0.04);
+            --shadow-lg: 0 20px 30px -6px rgba(15,23,42,0.12), 0 8px 12px -4px rgba(15,23,42,0.06);
+            --shadow-xl: 0 25px 50px -12px rgba(15,23,42,0.25);
+            --font-heading: 'Outfit', sans-serif;
+            --font-body: 'Plus Jakarta Sans', sans-serif;
         }
-        .t-header-row { display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; background: white; z-index: 11; padding: 15px 20px 10px 20px; border-bottom: 1px solid #eee; margin-bottom: 10px; }
-        .t-body-content { padding: 0 20px 20px 20px; }
-        .t-label { font-size: 0.65rem; color: #95a5a6; text-transform: uppercase; font-weight: bold; display: block; margin-top: 10px; }
-        .t-value { font-size: 1rem; color: #2c3e50; font-weight: 600; display: block; }
-        .edit-input { width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: var(--font-body);
+            background-color: var(--bg-main);
+            color: var(--text-primary);
+            line-height: 1.5;
+            min-height: 100vh;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- STICKY NAVBAR --- */
+        .navbar {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border-subtle);
+            padding: 0.75rem 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.3s ease;
+        }
+
+        .brand-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .brand-logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary) 0%, #334155 100%);
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #F59E0B;
+            font-size: 1.25rem;
+            box-shadow: 0 4px 10px rgba(15,23,42,0.15);
+            transition: transform 0.2s ease;
+        }
+
+        .brand-container:hover .brand-logo-icon {
+            transform: scale(1.05);
+        }
+
+        .brand-text h1 {
+            font-family: var(--font-heading);
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: var(--primary);
+            letter-spacing: -0.02em;
+            line-height: 1.1;
+        }
+
+        .brand-text span {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--accent-gold);
+            display: block;
+        }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .auth-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 14px;
+            background: var(--surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: 9999px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #10B981;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+            animation: pulse-dot 2s infinite;
+        }
+
+        @keyframes pulse-dot {
+            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+            70% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+
+        .btn-auth-action {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 16px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 9999px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 6px rgba(15,23,42,0.15);
+            text-decoration: none;
+        }
+
+        .btn-auth-action:hover {
+            background: #1E293B;
+            transform: translateY(-1px);
+        }
+
+        .btn-logout {
+            background: #FEE2E2;
+            color: #DC2626;
+            border: 1px solid #FECACA;
+        }
+
+        .btn-logout:hover {
+            background: #FCA5A5;
+            color: #991B1B;
+        }
+
+        /* --- MAIN CONTAINER --- */
+        .main-wrapper {
+            flex: 1;
+            max-width: 1400px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 1.5rem;
+        }
+
+        /* --- HERO & LANDING --- */
+        .hero-section {
+            text-align: center;
+            padding: 2.5rem 1rem 1.5rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            background: var(--accent-gold-light);
+            color: var(--accent-gold-hover);
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            margin-bottom: 1rem;
+        }
+
+        .hero-title {
+            font-family: var(--font-heading);
+            font-size: clamp(2rem, 4vw, 2.75rem);
+            font-weight: 800;
+            color: var(--primary);
+            line-height: 1.15;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.03em;
+        }
+
+        .hero-title span {
+            background: linear-gradient(135deg, var(--accent-gold) 0%, #F59E0B 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero-subtitle {
+            font-size: 1.05rem;
+            color: var(--text-secondary);
+            max-width: 580px;
+            margin: 0 auto 2rem;
+        }
+
+        /* City Filter Tabs */
+        .city-tabs-container {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 2.5rem;
+        }
+
+        .city-tab-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            background: var(--surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: 9999px;
+            color: var(--text-secondary);
+            font-size: 0.92rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .city-tab-btn:hover {
+            border-color: var(--accent-gold);
+            color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .city-tab-btn.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+            box-shadow: 0 4px 12px rgba(15,23,42,0.2);
+        }
+
+        /* Project Cards Grid */
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .project-card {
+            background: var(--surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .project-card:hover {
+            transform: translateY(-6px);
+            box-shadow: var(--shadow-lg);
+            border-color: rgba(217, 119, 6, 0.4);
+        }
+
+        .card-img-wrapper {
+            position: relative;
+            width: 100%;
+            height: 180px;
+            overflow: hidden;
+            background: #F1F5F9;
+        }
+
+        .card-img-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.4s ease;
+        }
+
+        .project-card:hover .card-img-wrapper img {
+            transform: scale(1.06);
+        }
+
+        .card-badge-city {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 12px;
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(8px);
+            color: white;
+            border-radius: 9999px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .card-badge-interactive {
+            position: absolute;
+            bottom: 12px;
+            right: 12px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 10px;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(8px);
+            color: var(--primary);
+            border-radius: 9999px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .project-card-body {
+            padding: 1.25rem;
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            justify-content: space-between;
+        }
+
+        .project-card-title {
+            font-family: var(--font-heading);
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .project-card-desc {
+            font-size: 0.82rem;
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+        }
+
+        .project-card-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-top: 0.75rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .view-map-link {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--accent-gold);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: gap 0.2s ease;
+        }
+
+        .project-card:hover .view-map-link {
+            gap: 10px;
+            color: var(--accent-gold-hover);
+        }
+
+        /* --- MAP WORKSPACE --- */
+        #workspace-view {
+            display: none;
+            animation: fadeIn 0.3s ease forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Workspace Header Bar */
+        .workspace-header {
+            background: var(--surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: 1rem 1.5rem;
+            margin-bottom: 1.25rem;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .workspace-title-group {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .current-project-info h2 {
+            font-family: var(--font-heading);
+            font-size: 1.35rem;
+            font-weight: 800;
+            color: var(--primary);
+            line-height: 1.1;
+        }
+
+        .current-project-info span {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        .workspace-selectors {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .custom-select {
+            padding: 8px 14px;
+            background: var(--surface);
+            border: 1px solid var(--border-medium);
+            border-radius: var(--radius-md);
+            font-family: var(--font-body);
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: var(--primary);
+            outline: none;
+            cursor: pointer;
+            transition: border-color 0.2s ease;
+        }
+
+        .custom-select:focus {
+            border-color: var(--accent-gold);
+            box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.15);
+        }
+
+        /* Search & Filter Toolbar */
+        .map-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 1.25rem;
+        }
+
+        .filter-chips-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .filter-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            background: var(--surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: 9999px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .filter-chip:hover {
+            border-color: var(--border-medium);
+            color: var(--primary);
+        }
+
+        .filter-chip.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .chip-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        /* Toolbar Actions: Back to Projects Button + Search Box */
+        .toolbar-nav-search-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn-back-projects {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: #F1F5F9;
+            color: var(--primary);
+            border: 1px solid var(--border-medium);
+            border-radius: var(--radius-md);
+            font-family: var(--font-body);
+            font-size: 0.85rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: var(--shadow-sm);
+            white-space: nowrap;
+        }
+
+        .btn-back-projects:hover {
+            background: #E2E8F0;
+            color: var(--accent-gold-hover);
+            transform: translateX(-2px);
+        }
+
+        .search-plot-box {
+            display: flex;
+            align-items: center;
+            background: var(--surface);
+            border: 1px solid var(--border-medium);
+            border-radius: var(--radius-md);
+            padding: 4px 6px 4px 12px;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.2s ease;
+        }
+
+        .search-plot-box:focus-within {
+            border-color: var(--accent-gold);
+            box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.15);
+        }
+
+        .search-plot-box i {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-right: 8px;
+        }
+
+        .search-plot-box input {
+            border: none;
+            outline: none;
+            font-family: var(--font-body);
+            font-size: 0.88rem;
+            color: var(--primary);
+            width: 140px;
+        }
+
+        .btn-search-trigger {
+            background: var(--accent-gold);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: var(--radius-sm);
+            font-size: 0.82rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        .btn-search-trigger:hover {
+            background: var(--accent-gold-hover);
+        }
+
+        /* KPI / Summary Dashboard */
+        .kpi-dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+            margin-bottom: 1.25rem;
+        }
+
+        .kpi-card {
+            background: var(--surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: 12px 16px;
+            box-shadow: var(--shadow-sm);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--border-medium);
+        }
+
+        .kpi-card.kpi-total::before { background: var(--primary); }
+        .kpi-card.kpi-registry::before { background: var(--registry); }
+        .kpi-card.kpi-booked::before { background: var(--booked); }
+        .kpi-card.kpi-vacant::before { background: var(--vacant); }
+
+        .kpi-info small {
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-secondary);
+            display: block;
+        }
+
+        .kpi-info b {
+            font-family: var(--font-heading);
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--primary);
+            line-height: 1.2;
+        }
+
+        .kpi-icon {
+            font-size: 1.5rem;
+            opacity: 0.2;
+            color: var(--primary);
+        }
+
+        /* Map Canvas & Pan/Zoom Viewport */
+        .map-viewport-wrapper {
+            position: relative;
+            background: #FFFFFF;
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            box-shadow: var(--shadow-md);
+            width: 100%;
+            height: 70vh;
+            min-height: 480px;
+            max-height: 850px;
+            cursor: grab;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: none;
+        }
+
+        .map-viewport-wrapper:active {
+            cursor: grabbing;
+        }
+
+        .map-transform-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            transform-origin: 0 0;
+            transition: transform 0.05s linear;
+            will-change: transform;
+        }
+
+        #map-image {
+            display: block;
+            max-width: none;
+            pointer-events: none;
+        }
+
+        #svg-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        polygon {
+            pointer-events: auto;
+            cursor: pointer;
+            transition: fill 0.15s ease, stroke 0.15s ease, stroke-width 0.15s ease;
+        }
+
+        polygon:hover {
+            filter: brightness(1.2);
+        }
+
+        /* Floating Zoom Controls */
+        .map-controls-floating {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            z-index: 40;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            background: rgba(255, 255, 255, 0.94);
+            backdrop-filter: blur(12px);
+            padding: 6px;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-subtle);
+            box-shadow: var(--shadow-md);
+        }
+
+        .map-ctrl-btn {
+            width: 38px;
+            height: 38px;
+            border: none;
+            background: transparent;
+            color: var(--primary);
+            font-size: 1rem;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .map-ctrl-btn:hover {
+            background: #F1F5F9;
+            color: var(--accent-gold);
+        }
+
+        .map-ctrl-divider {
+            height: 1px;
+            background: var(--border-subtle);
+            margin: 2px 0;
+        }
+
+        /* Map Legend Helper */
+        .map-legend-floating {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 40;
+            background: rgba(255, 255, 255, 0.94);
+            backdrop-filter: blur(12px);
+            padding: 8px 14px;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-subtle);
+            box-shadow: var(--shadow-md);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 0.78rem;
+            font-weight: 700;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .legend-badge {
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+        }
+
+        /* --- PLOT DETAILS DRAWER / MODAL --- */
+        #modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(15, 23, 42, 0.5);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.25s ease;
+        }
+
+        #modal-overlay.active {
+            opacity: 1;
+        }
+
+        .plot-drawer {
+            display: none;
+            position: fixed;
+            z-index: 1001;
+            background: var(--surface);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-xl);
+            box-sizing: border-box;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Desktop Center Modal */
+        @media (min-width: 768px) {
+            .plot-drawer {
+                width: 420px;
+                max-height: 85vh;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%) scale(0.95);
+                opacity: 0;
+            }
+
+            .plot-drawer.active {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+            }
+        }
+
+        /* Mobile Bottom Sheet Drawer */
+        @media (max-width: 767px) {
+            .plot-drawer {
+                width: 100vw;
+                max-height: 80vh;
+                bottom: 0;
+                left: 0;
+                border-bottom-left-radius: 0;
+                border-bottom-right-radius: 0;
+                transform: translateY(100%);
+            }
+
+            .plot-drawer.active {
+                transform: translateY(0);
+            }
+
+            .drawer-drag-handle {
+                width: 40px;
+                height: 5px;
+                background: #CBD5E1;
+                border-radius: 9999px;
+                margin: 10px auto 4px;
+            }
+        }
+
+        .drawer-header {
+            padding: 1.25rem 1.5rem;
+            background: linear-gradient(135deg, #F8FAFC 0%, #FFFFFF 100%);
+            border-bottom: 1px solid var(--border-subtle);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .drawer-plot-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .drawer-plot-badge {
+            font-family: var(--font-heading);
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: var(--primary);
+        }
+
+        .drawer-status-pill {
+            padding: 4px 12px;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .btn-close-drawer {
+            width: 34px;
+            height: 34px;
+            background: #F1F5F9;
+            border: none;
+            border-radius: 50%;
+            color: var(--text-secondary);
+            font-size: 1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .btn-close-drawer:hover {
+            background: #E2E8F0;
+            color: var(--primary);
+        }
+
+        .drawer-body {
+            padding: 1.5rem;
+            max-height: calc(80vh - 80px);
+            overflow-y: auto;
+        }
+
+        .detail-card-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 1.25rem;
+        }
+
+        .detail-item-box {
+            background: #F8FAFC;
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: 10px 14px;
+        }
+
+        .detail-item-label {
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 4px;
+        }
+
+        .detail-item-value {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--primary);
+            word-break: break-word;
+        }
+
+        .contact-action-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 1.25rem;
+        }
+
+        .btn-contact {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px;
+            border-radius: var(--radius-md);
+            font-size: 0.88rem;
+            font-weight: 700;
+            text-decoration: none;
+            color: white;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .btn-contact:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-whatsapp {
+            background: #25D366;
+        }
+
+        .btn-call {
+            background: #2563EB;
+        }
+
+        .btn-admin-edit {
+            width: 100%;
+            margin-top: 1.25rem;
+            padding: 12px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: 0.9rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .btn-admin-edit:hover {
+            background: #1E293B;
+        }
+
+        /* --- ADMIN EDIT FORM STYLES --- */
+        .form-group {
+            margin-bottom: 12px;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-secondary);
+            margin-bottom: 5px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px 14px;
+            background: #FFFFFF;
+            border: 1px solid var(--border-medium);
+            border-radius: var(--radius-md);
+            font-family: var(--font-body);
+            font-size: 0.92rem;
+            color: var(--primary);
+            outline: none;
+            transition: border-color 0.2s ease;
+        }
+
+        .form-control:focus {
+            border-color: var(--accent-gold);
+            box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.15);
+        }
+
+        .btn-save-plot {
+            width: 100%;
+            padding: 12px;
+            background: #059669;
+            color: white;
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 10px;
+            transition: background 0.2s ease;
+        }
+
+        .btn-save-plot:hover {
+            background: #047857;
+        }
+
+        /* --- AUTH & GARDEN MODALS --- */
+        .generic-modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--surface);
+            padding: 2rem;
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-xl);
+            z-index: 1002;
+            width: 90vw;
+            max-width: 400px;
+            text-align: center;
+            box-sizing: border-box;
+        }
+
+        .modal-icon-badge {
+            width: 50px;
+            height: 50px;
+            background: #FEF3C7;
+            color: #D97706;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.35rem;
+            margin: 0 auto 1rem;
+        }
+
+        .generic-modal h3 {
+            font-family: var(--font-heading);
+            font-size: 1.35rem;
+            font-weight: 800;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .generic-modal p {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 1.5rem;
+        }
+
+        #image-modal {
+            max-width: 800px;
+            padding: 1.25rem;
+        }
+
+        #image-modal img {
+            width: 100%;
+            max-height: 70vh;
+            object-fit: contain;
+            border-radius: var(--radius-md);
+            margin-top: 10px;
+        }
+
+        /* --- TOAST NOTIFICATIONS --- */
+        .toast-container {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 2000;
+            pointer-events: none;
+        }
+
+        .toast-msg {
+            background: var(--primary);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 9999px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            box-shadow: var(--shadow-lg);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            animation: toastSlideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes toastSlideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* --- FOOTER --- */
+        footer {
+            text-align: center;
+            padding: 2rem 1rem;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            border-top: 1px solid var(--border-subtle);
+            margin-top: auto;
+            background: var(--surface);
+        }
+
+        /* --- MOBILE SPECIFIC TWEAKS --- */
+        @media (max-width: 640px) {
+            .navbar { padding: 0.6rem 1rem; }
+            .brand-text h1 { font-size: 1.1rem; }
+            .main-wrapper { padding: 0.75rem; }
+            .hero-section { padding: 1.5rem 0.5rem 1rem; }
+            .kpi-dashboard { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+            .kpi-card { padding: 8px 12px; }
+            .kpi-info b { font-size: 1.25rem; }
+            .map-viewport-wrapper { height: 65vh; min-height: 420px; border-radius: var(--radius-md); }
+            .map-legend-floating { display: none; }
+            .map-toolbar { flex-direction: column; align-items: stretch; gap: 10px; }
+            .toolbar-nav-search-group { width: 100%; display: flex; gap: 8px; }
+            .btn-back-projects { flex: 0 0 auto; padding: 8px 12px; font-size: 0.8rem; }
+            .search-plot-box { flex: 1; }
+            .search-plot-box input { width: 100%; }
+            .filter-chips-group { justify-content: center; }
+            .map-controls-floating { bottom: 12px; right: 12px; }
+        }
     </style>
 </head>
 <body>
-    <!-- 60-DEGREE STRIPE PATTERN FOR LAND OWNER PLOTS -->
+
+    <!-- SVG PATTERNS -->
     <svg width="0" height="0" style="position:absolute; pointer-events:none; z-index:-1;">
         <defs>
             <pattern id="owner-pattern" width="12" height="12" patternTransform="rotate(60)" patternUnits="userSpaceOnUse">
-                <!-- Changed fill to white (#ffffff) -->
-                <rect width="12" height="12" fill="#ffffff" />
-                <!-- Black lines -->
-                <line x1="0" y1="0" x2="0" y2="12" stroke="#000000" stroke-width="4" />
+                <rect width="12" height="12" fill="#FFFFFF" />
+                <line x1="0" y1="0" x2="0" y2="12" stroke="#1E293B" stroke-width="4" />
             </pattern>
         </defs>
     </svg>
 
+    <!-- BACKDROP OVERLAY -->
     <div id="modal-overlay" onclick="closeAllModals()"></div>
 
-    <div id="login-modal">
-        <h3 style="margin:0 0 15px 0;">Login</h3>
-        <input type="text" id="login-user" class="login-input" placeholder="Username">
-        <input type="password" id="login-pass" class="login-input" placeholder="Password">
-        <button class="btn-login-submit" onclick="submitLogin()">Sign In</button>
-        <button onclick="closeAllModals()" style="background:none; border:none; color:gray; cursor:pointer; margin-top:15px;">Cancel</button>
-    </div>
-
-    <!-- The Garden Image Viewer Modal -->
-    <div id="image-modal" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 2147483647; background: white; padding: 15px; border-radius: 12px; box-shadow: 0 15px 50px rgba(0,0,0,0.5); text-align: center; width: 90vw; max-width: 800px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-            <h3 style="margin: 0; color: var(--developer);" id="garden-title">Garden View</h3>
-            <button onclick="closeAllModals()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #e74c3c;">&times;</button>
-        </div>
-        <img id="garden-img" src="" alt="Garden Image" style="width: 100%; max-height: 70vh; object-fit: contain; border-radius: 8px;">
-    </div>
-
-    <div class="admin-bar">
-        {% if is_admin or is_employee %}
-            <span style="color:var(--registry); font-weight:bold;">● {{ 'Admin Mode' if is_admin else 'Employee Mode' }}</span> | <a href="/logout" style="color:red; text-decoration:none;">Logout</a>
-        {% else %}
-            <button onclick="showLoginPrompt()" style="border:none; background:none; color:var(--gold); font-weight:bold; cursor:pointer;">Login</button>
-        {% endif %}
-    </div>
-    
-    <div class="header"><h1 onclick="goHome()">Techunited Plot Locator</h1></div>
-
-    <div class="controls" id="main-controls">
-        <div class="row">
-            <select id="city-select" onchange="updateProjects()">
-                <option value="">Select City</option>
-                {% for city in cities %}<option value="{{ city }}">{{ city }}</option>{% endfor %}
-            </select>
-            <select id="project-select" onchange="loadMap()" disabled><option>Select Project</option></select>
-        </div>
-        <div class="row" id="search-area" style="display:none;">
-            <input type="text" id="plot-search" placeholder="Enter Plot ID">
-            <button class="btn-search" onclick="searchPlot()">Find Plot</button>
-        </div>
-    </div>
-
-    <div id="landing-projects">
-        <div class="gallery-title">Featured Projects</div>
-        <div class="project-grid">
-            <div class="project-card" onclick="quickLoad('Khandwa', 'muffadal_park')">
-                <img src="https://jpeezqoinwzrruknbsmy.supabase.co/storage/v1/object/public/project-maps/Khandwa/muffadal_park/map.png" onerror="this.src='https://placehold.co/400x250?text=Listing'">
-                <div class="project-info"><span class="project-name">Muffadal Park</span><span class="project-city">Khandwa</span></div>
+    <!-- NAVBAR -->
+    <header class="navbar">
+        <div class="brand-container" onclick="goHome()">
+            <div class="brand-logo-icon">
+                <i class="fa-solid fa-map-location-dot"></i>
             </div>
-            <div class="project-card" onclick="quickLoad('Khandwa', 'smart_city')">
-                <img src="https://jpeezqoinwzrruknbsmy.supabase.co/storage/v1/object/public/project-maps/Khandwa/smart_city/map.png" onerror="this.src='https://placehold.co/400x250?text=Listing'">
-                <div class="project-info"><span class="project-name">Smart City</span><span class="project-city">Khandwa</span></div>
-            </div>
-            <div class="project-card" onclick="quickLoad('Khandwa', 'hi_link')">
-                <img src="https://jpeezqoinwzrruknbsmy.supabase.co/storage/v1/object/public/project-maps/Khandwa/hi_link/map.png" onerror="this.src='https://placehold.co/400x250?text=Listing'">
-                <div class="project-info"><span class="project-name">Hi Link City</span><span class="project-city">Khandwa</span></div>
-            </div>
-            <div class="project-card" onclick="quickLoad('Khandwa', 'mahakali_puram')">
-                <img src="https://jpeezqoinwzrruknbsmy.supabase.co/storage/v1/object/public/project-maps/Khandwa/mahakali_puram/map.png" onerror="this.src='https://placehold.co/400x250?text=Listing'">
-                <div class="project-info"><span class="project-name">Mahakali Puram</span><span class="project-city">Khandwa</span></div>
-            </div>
-            <div class="project-card" onclick="quickLoad('Khandwa', 'keshav_nagar')">
-                <img src="https://jpeezqoinwzrruknbsmy.supabase.co/storage/v1/object/public/project-maps/Khandwa/keshav_nagar/map.png" onerror="this.src='https://placehold.co/400x250?text=Listing'">
-                <div class="project-info"><span class="project-name">Keshav Nagar</span><span class="project-city">Khandwa</span></div>
-            </div>
-            <div class="project-card" onclick="quickLoad('Mundi', 'mahaveer_nagar')">
-                <img src="https://jpeezqoinwzrruknbsmy.supabase.co/storage/v1/object/public/project-maps/Mundi/mahaveer_nagar/map.png" onerror="this.src='https://placehold.co/400x250?text=Listing'">
-                <div class="project-info"><span class="project-name">Mahaveer Nagar</span><span class="project-city">Mundi</span></div>
-            </div>
-            <div class="project-card" onclick="quickLoad('Jawar', 'shree_ganpati_residency')">
-                <img src="https://jpeezqoinwzrruknbsmy.supabase.co/storage/v1/object/public/project-maps/Jawar/shree_ganpati_residency/map.png" onerror="this.src='https://placehold.co/400x250?text=Listing'">
-                <div class="project-info"><span class="project-name">Shree Ganpati Residency</span><span class="project-city">Jawar</span></div>
-            </div>
-                <div class="project-card" onclick="quickLoad('Khandwa', 'shriram_setu_puram')">
-                <img src="https://jpeezqoinwzrruknbsmy.supabase.co/storage/v1/object/public/project-maps/Khandwa/shriram_setu_puram/map.png" onerror="this.src='https://placehold.co/400x250?text=Listing'">
-                <div class="project-info"><span class="project-name">Shri Ram Setu Puram </span><span class="project-city">Khandwa</span></div>
+            <div class="brand-text">
+                <h1>Techunited</h1>
+                <span>Plot Locator 2.0</span>
             </div>
         </div>
+        
+        <div class="nav-actions">
+            {% if is_admin or is_employee %}
+                <div class="auth-pill">
+                    <div class="status-dot"></div>
+                    <span>{{ 'Admin Mode' if is_admin else 'Employee' }}</span>
+                </div>
+                <a href="/logout" class="btn-auth-action btn-logout">
+                    <i class="fa-solid fa-right-from-bracket"></i> Logout
+                </a>
+            {% else %}
+                <button class="btn-auth-action" onclick="showLoginPrompt()">
+                    <i class="fa-solid fa-lock"></i> Sign In
+                </button>
+            {% endif %}
+        </div>
+    </header>
+
+    <main class="main-wrapper">
+        <!-- ================= LANDING DISCOVERY VIEW ================= -->
+        <section id="landing-view">
+            <div class="hero-section">
+                <div class="hero-badge">
+                    <i class="fa-solid fa-sparkles"></i> Real-Time Colony Mapping
+                </div>
+                <h1 class="hero-title">Discover & Track <span>Colony Plots</span> with Ease</h1>
+                <p class="hero-subtitle">Interactive blueprint navigator with instant plot availability, registry tracking, and layout inspection.</p>
+                
+                <!-- City Filter Buttons -->
+                <div class="city-tabs-container">
+                    <button class="city-tab-btn active" onclick="filterProjectsByCity('ALL', this)">
+                        <i class="fa-solid fa-layer-group"></i> All Cities
+                    </button>
+                    {% for city in cities %}
+                    <button class="city-tab-btn" onclick="filterProjectsByCity('{{ city }}', this)">
+                        <i class="fa-solid fa-location-dot"></i> {{ city }}
+                    </button>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Featured Projects Cards Grid -->
+            <div class="projects-grid" id="project-cards-container">
+                <div class="project-card" data-city="Khandwa" onclick="quickLoad('Khandwa', 'muffadal_park')">
+                    <div class="card-img-wrapper">
+                        <img src="https://jpeezqoinwzrruknbsmy.supabase.co/storage/v1/object/public/project-maps/Khandwa/muffadal_park/map.png" onerror="this.src='https://placehold.co/600x400/0F172A/FFFFFF?text=Muffadal+Park'">
+                        <span class="card-badge-city"><i class="fa-solid fa-location-dot"></i> Khandwa</span>
+                        <span class="card-badge-interactive"><i class="fa-solid fa-hand-pointer"></i> Interactive</span>
+                    </div>
+                    <div class="project-card-body">
+                        <div>
+                            <h3 class="project-card-title">Muffadal Park</h3>
+                            <p class="project-card-desc">Prime residential layout with complete master plan mapping.</p>
+                        </div>
+                        <div class="project-card-footer">
+                            <span class="view-map-link">View Layout Map <i class="fa-solid fa-arrow-right"></i></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="project-card" data-city="Khandwa" onclick="quickLoad('Khandwa', 'smart_city')">
+                    <div class="card-img-wrapper">
+                        <img src="https://jpeezqoinwzrruknbsmy.supabase.co/storage/v1/object/public/project-maps/Khandwa/smart_city/map.png" onerror="this.src='https://placehold.co/600x400/0F172A/FFFFFF?text=Smart+City'">
+                        <span class="card-badge-city"><i class="fa-solid fa-location-dot"></i> Khandwa</span>
+                        <span class="card-badge-interactive"><i class="fa-solid fa-hand-pointer"></i> Interactive</span>
+                    </div>
+                    <div class="project-card-body">
+                        <div>
+                            <h3 class="project-card-title">Smart City</h3>
+                            <p class="project-card-desc">Modern gated township with ready registries & commercial zones.</p>
+                        </div>
+                        <div class="project-card-footer">
+                            <span class="view-map-link">View Layout Map <i class="fa-solid fa-arrow-right"></i></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="project-card" data-city="Khandwa" onclick="quickLoad('Khandwa', 'hi_link')">
+                    <div class="card-img-wrapper">
+                        <img src="https://jpeezqoinwzrruknbsmy.supabase.co/storage/v1/object/public/project-maps/Khandwa/hi_link/map.png" onerror="this.src='https://placehold.co/600x400/0F172A/FFFFFF?text=Hi+Link+City'">
+                        <span class="card-badge-city"><i class="fa-solid fa-location-dot"></i> Khandwa</span>
+                        <span class="card-badge-interactive"><i class="fa-solid fa-hand-pointer"></i> Interactive</span>
+                    </div>
+                    <div class="project-card-body">
+                        <div>
+                            <h3 class="project-card-title">Hi Link City</h3>
+                            <p class="project-card-desc">Strategic connectivity with premium sector residential plots.</p>
+                        </div>
+                        <div class="project-card-footer">
+                            <span class="view-map-link">View Layout Map <i class="fa-solid fa-arrow-right"></i></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="project-card" data-city="Khandwa" onclick="quickLoad('Khandwa', 'mahakali_puram')">
+                    <div class="card-img-wrapper">
+                        <img src="https://jpeezqoinwzrruknbsmy.supabase.co/storage/v1/object/public/project-maps/Khandwa/mahakali_puram/map.png" onerror="this.src='https://placehold.co/600x400/0F172A/FFFFFF?text=Mahakali+Puram'">
+                        <span class="card-badge-city"><i class="fa-solid fa-location-dot"></i> Khandwa</span>
+                        <span class="card-badge-interactive"><i class="fa-solid fa-hand-pointer"></i> Interactive</span>
+                    </div>
+                    <div class="project-card-body">
+                        <div>
+                            <h3 class="project-card-title">Mahakali Puram</h3>
+                            <p class="project-card-desc">Scenic community with garden plots and wide avenue access.</p>
+                        </div>
+                        <div class="project-card-footer">
+                            <span class="view-map-link">View Layout Map <i class="fa-solid fa-arrow-right"></i></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="project-card" data-city="Khandwa" onclick="quickLoad('Khandwa', 'keshav_nagar')">
+                    <div class="card-img-wrapper">
+                        <img src="https://jpeezqoinwzrruknbsmy.supabase.co/storage/v1/object/public/project-maps/Khandwa/keshav_nagar/map.png" onerror="this.src='https://placehold.co/600x400/0F172A/FFFFFF?text=Keshav+Nagar'">
+                        <span class="card-badge-city"><i class="fa-solid fa-location-dot"></i> Khandwa</span>
+                        <span class="card-badge-interactive"><i class="fa-solid fa-hand-pointer"></i> Interactive</span>
+                    </div>
+                    <div class="project-card-body">
+                        <div>
+                            <h3 class="project-card-title">Keshav Nagar</h3>
+                            <p class="project-card-desc">Established residential sectors with registered family plots.</p>
+                        </div>
+                        <div class="project-card-footer">
+                            <span class="view-map-link">View Layout Map <i class="fa-solid fa-arrow-right"></i></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="project-card" data-city="Khandwa" onclick="quickLoad('Khandwa', 'shriram_setu_puram')">
+                    <div class="card-img-wrapper">
+                        <img src="https://jpeezqoinwzrruknbsmy.supabase.co/storage/v1/object/public/project-maps/Khandwa/shriram_setu_puram/map.png" onerror="this.src='https://placehold.co/600x400/0F172A/FFFFFF?text=Shri+Ram+Setu+Puram'">
+                        <span class="card-badge-city"><i class="fa-solid fa-location-dot"></i> Khandwa</span>
+                        <span class="card-badge-interactive"><i class="fa-solid fa-hand-pointer"></i> Interactive</span>
+                    </div>
+                    <div class="project-card-body">
+                        <div>
+                            <h3 class="project-card-title">Shri Ram Setu Puram</h3>
+                            <p class="project-card-desc">Newly mapped colony with premium front-facing plots.</p>
+                        </div>
+                        <div class="project-card-footer">
+                            <span class="view-map-link">View Layout Map <i class="fa-solid fa-arrow-right"></i></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="project-card" data-city="Mundi" onclick="quickLoad('Mundi', 'mahaveer_nagar')">
+                    <div class="card-img-wrapper">
+                        <img src="https://jpeezqoinwzrruknbsmy.supabase.co/storage/v1/object/public/project-maps/Mundi/mahaveer_nagar/map.png" onerror="this.src='https://placehold.co/600x400/0F172A/FFFFFF?text=Mahaveer+Nagar'">
+                        <span class="card-badge-city"><i class="fa-solid fa-location-dot"></i> Mundi</span>
+                        <span class="card-badge-interactive"><i class="fa-solid fa-hand-pointer"></i> Interactive</span>
+                    </div>
+                    <div class="project-card-body">
+                        <div>
+                            <h3 class="project-card-title">Mahaveer Nagar</h3>
+                            <p class="project-card-desc">Prime Mundi colony plots with all amenities planned.</p>
+                        </div>
+                        <div class="project-card-footer">
+                            <span class="view-map-link">View Layout Map <i class="fa-solid fa-arrow-right"></i></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="project-card" data-city="Jawar" onclick="quickLoad('Jawar', 'shree_ganpati_residency')">
+                    <div class="card-img-wrapper">
+                        <img src="https://jpeezqoinwzrruknbsmy.supabase.co/storage/v1/object/public/project-maps/Jawar/shree_ganpati_residency/map.png" onerror="this.src='https://placehold.co/600x400/0F172A/FFFFFF?text=Shree+Ganpati+Residency'">
+                        <span class="card-badge-city"><i class="fa-solid fa-location-dot"></i> Jawar</span>
+                        <span class="card-badge-interactive"><i class="fa-solid fa-hand-pointer"></i> Interactive</span>
+                    </div>
+                    <div class="project-card-body">
+                        <div>
+                            <h3 class="project-card-title">Shree Ganpati Residency</h3>
+                            <p class="project-card-desc">High-demand residential project in Jawar vicinity.</p>
+                        </div>
+                        <div class="project-card-footer">
+                            <span class="view-map-link">View Layout Map <i class="fa-solid fa-arrow-right"></i></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= INTERACTIVE WORKSPACE VIEW ================= -->
+        <section id="workspace-view">
+            <!-- Workspace Switcher Header -->
+            <div class="workspace-header">
+                <div class="workspace-title-group">
+                    <div class="current-project-info">
+                        <h2 id="display-project-name">Loading Colony...</h2>
+                        <span id="display-city-name">Location</span>
+                    </div>
+                </div>
+
+                <div class="workspace-selectors">
+                    <select id="city-select" class="custom-select" onchange="updateProjects()">
+                        <option value="">Select City</option>
+                        {% for city in cities %}<option value="{{ city }}">{{ city }}</option>{% endfor %}
+                    </select>
+                    <select id="project-select" class="custom-select" onchange="loadMap()" disabled>
+                        <option value="">Select Colony</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Live KPI Counter Bar -->
+            <div class="kpi-dashboard" id="kpi-dashboard">
+                <div class="kpi-card kpi-total">
+                    <div class="kpi-info">
+                        <small>Total Plots</small>
+                        <b id="count-total">0</b>
+                    </div>
+                    <i class="fa-solid fa-vector-square kpi-icon"></i>
+                </div>
+                <div class="kpi-card kpi-vacant">
+                    <div class="kpi-info">
+                        <small style="color:var(--vacant);">Vacant Plots</small>
+                        <b id="count-vacant" style="color:var(--vacant);">0</b>
+                    </div>
+                    <i class="fa-solid fa-circle-xmark kpi-icon" style="color:var(--vacant);"></i>
+                </div>
+                <div class="kpi-card kpi-booked">
+                    <div class="kpi-info">
+                        <small style="color:var(--booked);">Booked Plots</small>
+                        <b id="count-book" style="color:var(--booked);">0</b>
+                    </div>
+                    <i class="fa-solid fa-clock kpi-icon" style="color:var(--booked);"></i>
+                </div>
+                <div class="kpi-card kpi-registry">
+                    <div class="kpi-info">
+                        <small style="color:var(--registry);">Registry Done</small>
+                        <b id="count-reg" style="color:var(--registry);">0</b>
+                    </div>
+                    <i class="fa-solid fa-circle-check kpi-icon" style="color:var(--registry);"></i>
+                </div>
+            </div>
+
+            <!-- Toolbar: Status Filter Chips + [Back to Projects] + Instant Plot Search -->
+            <div class="map-toolbar">
+                <div class="filter-chips-group">
+                    <button class="filter-chip active" data-filter="all" onclick="applyStatusFilter('all', this)">
+                        All Plots
+                    </button>
+                    <!-- Vacant: Red -->
+                    <button class="filter-chip" data-filter="vacant" onclick="applyStatusFilter('vacant', this)">
+                        <span class="chip-dot" style="background:var(--vacant);"></span> Vacant (Red)
+                    </button>
+                    <!-- Booked: Yellow -->
+                    <button class="filter-chip" data-filter="booked" onclick="applyStatusFilter('booked', this)">
+                        <span class="chip-dot" style="background:var(--booked);"></span> Booked (Yellow)
+                    </button>
+                    <!-- Registry: Green -->
+                    <button class="filter-chip" data-filter="registry" onclick="applyStatusFilter('registry', this)">
+                        <span class="chip-dot" style="background:var(--registry);"></span> Registry Done (Green)
+                    </button>
+                </div>
+
+                <!-- Back to Projects is positioned directly before the Search Box -->
+                <div class="toolbar-nav-search-group">
+                    <button class="btn-back-projects" onclick="goHome()" title="Return to Projects / Colonies Gallery">
+                        <i class="fa-solid fa-arrow-left"></i> Back to Projects
+                    </button>
+                    <div class="search-plot-box">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" id="plot-search" placeholder="Search Plot # (e.g. 12)" onkeyup="if(event.key === 'Enter') searchPlot()">
+                        <button class="btn-search-trigger" onclick="searchPlot()">Find</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Map Viewport with Pan/Zoom & SVG Overlay -->
+            <div class="map-viewport-wrapper" id="viewport-container">
+                <!-- Floating Legend -->
+                <div class="map-legend-floating">
+                    <div class="legend-item">
+                        <span class="legend-badge" style="background:rgba(239,68,68,0.4); border:1px solid #DC2626;"></span>
+                        <span>Vacant (Red)</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-badge" style="background:rgba(234,179,8,0.45); border:1px solid #CA8A04;"></span>
+                        <span>Booked (Yellow)</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-badge" style="background:rgba(16,185,129,0.45); border:1px solid #059669;"></span>
+                        <span>Registry (Green)</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-badge" style="background:url(#owner-pattern); border:1px solid #1E293B;"></span>
+                        <span>Owner</span>
+                    </div>
+                </div>
+
+                <!-- Floating Pan/Zoom Controls -->
+                <div class="map-controls-floating">
+                    <button class="map-ctrl-btn" onclick="zoomMap(1.25)" title="Zoom In">
+                        <i class="fa-solid fa-plus"></i>
+                    </button>
+                    <button class="map-ctrl-btn" onclick="zoomMap(0.8)" title="Zoom Out">
+                        <i class="fa-solid fa-minus"></i>
+                    </button>
+                    <div class="map-ctrl-divider"></div>
+                    <button class="map-ctrl-btn" onclick="resetMapView()" title="Reset View">
+                        <i class="fa-solid fa-arrows-rotate"></i>
+                    </button>
+                    <button class="map-ctrl-btn" onclick="toggleFullscreen()" title="Fullscreen">
+                        <i class="fa-solid fa-expand"></i>
+                    </button>
+                </div>
+
+                <!-- Transform Container for Pan & Zoom -->
+                <div class="map-transform-container" id="map-transform-layer">
+                    <img id="map-image" src="" alt="Colony Master Plan">
+                    <svg id="svg-overlay"></svg>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- ================= PLOT DETAILS INSPECTOR DRAWER ================= -->
+    <div class="plot-drawer" id="plot-drawer">
+        <div class="drawer-drag-handle"></div>
+        <div class="drawer-header">
+            <div class="drawer-plot-title">
+                <span class="drawer-plot-badge" id="drawer-plot-id">Plot #--</span>
+                <span class="drawer-status-pill" id="drawer-status-pill">Status</span>
+            </div>
+            <button class="btn-close-drawer" onclick="closeDrawer()">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="drawer-body" id="drawer-content-body">
+            <!-- Dynamic Plot Metadata Injected via JS -->
+        </div>
     </div>
 
-    <div id="nav-controls" class="nav-controls" style="display:none; margin-bottom:15px;">
-        <button class="btn-back" onclick="goHome()">← Back to Projects</button>
+    <!-- ================= AUTH LOGIN MODAL ================= -->
+    <div id="login-modal" class="generic-modal">
+        <div class="modal-icon-badge">
+            <i class="fa-solid fa-shield-halved"></i>
+        </div>
+        <h3>Portal Login</h3>
+        <p>Sign in with administrative or employee credentials to manage plot statuses.</p>
+        
+        <div class="form-group">
+            <label>Username</label>
+            <input type="text" id="login-user" class="form-control" placeholder="Enter username" autocomplete="username">
+        </div>
+        <div class="form-group">
+            <label>Password</label>
+            <input type="password" id="login-pass" class="form-control" placeholder="Enter password" autocomplete="current-password" onkeyup="if(event.key === 'Enter') submitLogin()">
+        </div>
+        <button class="btn-save-plot" onclick="submitLogin()" style="background:var(--primary); margin-top:15px;">
+            <i class="fa-solid fa-arrow-right-to-bracket"></i> Sign In
+        </button>
+        <button onclick="closeAllModals()" style="background:none; border:none; color:var(--text-muted); cursor:pointer; margin-top:15px; font-weight:600; font-size:0.85rem;">
+            Cancel
+        </button>
     </div>
 
-    <div id="map-area" class="map-section">
-        <div style="position:relative; width:100%;"><img id="map-image" src=""><svg id="svg-overlay"></svg></div>
+    <!-- ================= GARDEN IMAGE MODAL ================= -->
+    <div id="image-modal" class="generic-modal">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h3 id="garden-title" style="margin:0; text-align:left;">Garden View</h3>
+            <button class="btn-close-drawer" onclick="closeAllModals()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <img id="garden-img" src="" alt="Park & Garden View">
     </div>
 
-    <div class="summary-bar" id="summary-bar">
-        <div class="summary-card"><b>Total</b><span id="count-total">0</span></div>
-        <div class="summary-card" style="border-bottom-color:var(--registry)"><small>Registry</small><b id="count-reg">0</b></div>
-        <div class="summary-card" style="border-bottom-color:var(--booked)"><small>Booked</small><b id="count-book">0</b></div>
-        <div class="summary-card" style="border-bottom-color:var(--vacant)"><small>Vacant</small><b id="count-vacant">0</b></div>
-    </div>
+    <!-- TOAST NOTIFICATION CONTAINER -->
+    <div class="toast-container" id="toast-container"></div>
 
-    <div id="tooltip"><div id="tooltip-content"></div></div>
+    <footer>
+        <p>© 2026 Techunited Real Estate Management. Interactive Colony Mapping Solution.</p>
+    </footer>
 
+    <!-- ================= JAVASCRIPT LOGIC ================= -->
     <script>
         const IS_ADMIN = "{{ 'true' if is_admin else 'false' }}" === "true";
         const IS_EMPLOYEE = "{{ 'true' if is_employee else 'false' }}" === "true";
         const VIEW_MODE = (!IS_ADMIN && !IS_EMPLOYEE);
 
-        const citySel = document.getElementById('city-select'), projSel = document.getElementById('project-select');
-        const mapImg = document.getElementById('map-image'), svgOverlay = document.getElementById('svg-overlay');
-        const tooltip = document.getElementById('tooltip'), overlay = document.getElementById('modal-overlay');
-        let isLocked = false, currentPlotData = null, activePoly = null, lastFetchedPlots = [], hideTimer;
+        const citySel = document.getElementById('city-select');
+        const projSel = document.getElementById('project-select');
+        const mapImg = document.getElementById('map-image');
+        const svgOverlay = document.getElementById('svg-overlay');
+        const drawer = document.getElementById('plot-drawer');
+        const overlay = document.getElementById('modal-overlay');
+        const mapLayer = document.getElementById('map-transform-layer');
+        const viewport = document.getElementById('viewport-container');
 
-        function showLoginPrompt() { document.getElementById('login-modal').style.display = 'block'; overlay.style.display = 'block'; }
-        
-        function closeAllModals() { 
-            document.getElementById('login-modal').style.display = 'none'; 
-            document.getElementById('image-modal').style.display = 'none';
-            closeTooltip(); 
+        let currentPlotData = null;
+        let activePoly = null;
+        let lastFetchedPlots = [];
+        let currentStatusFilter = 'all';
+
+        // --- PAN & ZOOM STATE ---
+        let scale = 1;
+        let panX = 0;
+        let panY = 0;
+        let isPanning = false;
+        let startX = 0;
+        let startY = 0;
+
+        function updateTransform() {
+            mapLayer.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
         }
 
-        function submitLogin() {
-            const user = document.getElementById('login-user').value;
-            const pass = document.getElementById('login-pass').value;
-            fetch('/login', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({username: user, password: pass}) })
-            .then(res => res.json()).then(data => { if(data.success) location.reload(); else alert("Denied"); });
+        function zoomMap(factor) {
+            const newScale = Math.min(Math.max(0.3, scale * factor), 5.0);
+            const rect = viewport.getBoundingClientRect();
+            const cx = rect.width / 2;
+            const cy = rect.height / 2;
+            panX = cx - (cx - panX) * (newScale / scale);
+            panY = cy - (cy - panY) * (newScale / scale);
+            scale = newScale;
+            updateTransform();
         }
 
-        function goHome() {
-            document.getElementById('landing-projects').style.display = 'block';
-            document.getElementById('nav-controls').style.display = 'none';
-            document.getElementById('map-area').style.display = 'none';
-            document.getElementById('summary-bar').style.display = 'none';
-            document.getElementById('search-area').style.display = 'none';
-            citySel.value = ""; projSel.disabled = true;
+        function resetMapView() {
+            if (!mapImg.naturalWidth) return;
+            const vRect = viewport.getBoundingClientRect();
+            const iWidth = mapImg.naturalWidth;
+            const iHeight = mapImg.naturalHeight;
+            
+            const scaleX = vRect.width / iWidth;
+            const scaleY = vRect.height / iHeight;
+            scale = Math.min(scaleX, scaleY, 1.0);
+            
+            panX = (vRect.width - (iWidth * scale)) / 2;
+            panY = (vRect.height - (iHeight * scale)) / 2;
+            updateTransform();
         }
 
-        function applyZoomProofLayout() {
-            if (window.innerWidth < 768 && tooltip.style.display === 'block') {
-                const vv = window.visualViewport;
-                tooltip.style.top = vv.offsetTop + 'px'; tooltip.style.left = vv.offsetLeft + 'px';
-                tooltip.style.width = vv.width + 'px'; tooltip.style.height = vv.height + 'px';
-                overlay.style.top = vv.offsetTop + 'px'; overlay.style.left = vv.offsetLeft + 'px';
-                overlay.style.width = vv.width + 'px'; overlay.style.height = vv.height + 'px';
-                overlay.style.display = 'block'; document.body.classList.add('no-scroll');
-                const scale = 1 / vv.scale; const inner = document.getElementById('tooltip-content');
-                inner.style.transform = `scale(${scale})`; inner.style.transformOrigin = 'top left'; inner.style.width = (100 * vv.scale) + '%';
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                viewport.requestFullscreen().catch(err => console.log(err));
+            } else {
+                document.exitFullscreen();
             }
         }
 
-        if (window.visualViewport) {
-            window.visualViewport.addEventListener('scroll', applyZoomProofLayout);
-            window.visualViewport.addEventListener('resize', applyZoomProofLayout);
+        // Viewport Mouse Pan Listeners
+        viewport.addEventListener('mousedown', (e) => {
+            if (e.target.tagName.toLowerCase() === 'polygon' || e.target.closest('.map-controls-floating') || e.target.closest('.map-legend-floating')) {
+                return;
+            }
+            isPanning = true;
+            startX = e.clientX - panX;
+            startY = e.clientY - panY;
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (!isPanning) return;
+            panX = e.clientX - startX;
+            panY = e.clientY - startY;
+            updateTransform();
+        });
+
+        window.addEventListener('mouseup', () => { isPanning = false; });
+
+        viewport.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const factor = e.deltaY < 0 ? 1.15 : 0.85;
+            const rect = viewport.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
+            const newScale = Math.min(Math.max(0.3, scale * factor), 5.0);
+            panX = mouseX - (mouseX - panX) * (newScale / scale);
+            panY = mouseY - (mouseY - panY) * (newScale / scale);
+            scale = newScale;
+            updateTransform();
+        }, { passive: false });
+
+        // Touch gestures for mobile
+        let initialTouchDist = null;
+        viewport.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 1) {
+                isPanning = true;
+                startX = e.touches[0].clientX - panX;
+                startY = e.touches[0].clientY - panY;
+            } else if (e.touches.length === 2) {
+                isPanning = false;
+                initialTouchDist = Math.hypot(
+                    e.touches[0].clientX - e.touches[1].clientX,
+                    e.touches[0].clientY - e.touches[1].clientY
+                );
+            }
+        }, { passive: true });
+
+        viewport.addEventListener('touchmove', (e) => {
+            if (e.touches.length === 1 && isPanning) {
+                panX = e.touches[0].clientX - startX;
+                panY = e.touches[0].clientY - startY;
+                updateTransform();
+            } else if (e.touches.length === 2 && initialTouchDist) {
+                const currentDist = Math.hypot(
+                    e.touches[0].clientX - e.touches[1].clientX,
+                    e.touches[0].clientY - e.touches[1].clientY
+                );
+                const factor = currentDist / initialTouchDist;
+                if (Math.abs(factor - 1) > 0.02) {
+                    zoomMap(factor);
+                    initialTouchDist = currentDist;
+                }
+            }
+        }, { passive: true });
+
+        viewport.addEventListener('touchend', () => {
+            isPanning = false;
+            initialTouchDist = null;
+        });
+
+        // --- CITY FILTER ON LANDING ---
+        function filterProjectsByCity(cityName, btn) {
+            document.querySelectorAll('.city-tab-btn').forEach(b => b.classList.remove('active'));
+            if(btn) btn.classList.add('active');
+
+            const cards = document.querySelectorAll('.project-card');
+            cards.forEach(card => {
+                if (cityName === 'ALL' || card.dataset.city === cityName) {
+                    card.style.display = 'flex';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        // --- NAVIGATION & VIEWS ---
+        function showLoginPrompt() {
+            document.getElementById('login-modal').style.display = 'block';
+            overlay.style.display = 'block';
+            setTimeout(() => overlay.classList.add('active'), 10);
+        }
+
+        function closeAllModals() {
+            document.getElementById('login-modal').style.display = 'none';
+            document.getElementById('image-modal').style.display = 'none';
+            closeDrawer();
+            overlay.classList.remove('active');
+            setTimeout(() => { overlay.style.display = 'none'; }, 200);
+        }
+
+        function submitLogin() {
+            const user = document.getElementById('login-user').value.trim();
+            const pass = document.getElementById('login-pass').value.trim();
+            if (!user || !pass) {
+                showToast("Please enter username and password");
+                return;
+            }
+
+            fetch('/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: user, password: pass })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    showToast("Login Successful!");
+                    setTimeout(() => location.reload(), 600);
+                } else {
+                    showToast("Invalid credentials. Try again.");
+                }
+            })
+            .catch(() => showToast("Connection error during sign-in."));
+        }
+
+        function goHome() {
+            document.getElementById('landing-view').style.display = 'block';
+            document.getElementById('workspace-view').style.display = 'none';
+            citySel.value = "";
+            projSel.disabled = true;
+            closeAllModals();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         function updateProjects(autoSelect = null) {
-            fetch(`/get_projects?city=${citySel.value}`).then(res => res.json()).then(projects => {
-                projSel.innerHTML = '<option value="">Select Project</option>';
-                projects.forEach(p => { let opt = document.createElement('option'); opt.value = p; opt.innerHTML = p.replace(/_/g, ' ').toUpperCase(); projSel.appendChild(opt); });
-                projSel.disabled = false; if (autoSelect) { projSel.value = autoSelect; loadMap(); }
+            fetch(`/get_projects?city=${citySel.value}`)
+            .then(res => res.json())
+            .then(projects => {
+                projSel.innerHTML = '<option value="">Select Colony</option>';
+                projects.forEach(p => {
+                    let opt = document.createElement('option');
+                    opt.value = p;
+                    opt.innerHTML = p.replace(/_/g, ' ').toUpperCase();
+                    projSel.appendChild(opt);
+                });
+                projSel.disabled = false;
+                if (autoSelect) {
+                    projSel.value = autoSelect;
+                    loadMap();
+                }
             });
         }
 
@@ -267,300 +1835,444 @@
         function loadMap() {
             if (!projSel.value) return;
 
-            const mapArea = document.getElementById('map-area');
+            document.getElementById('landing-view').style.display = 'none';
+            document.getElementById('workspace-view').style.display = 'block';
             
-            mapArea.style.opacity = '0';
+            document.getElementById('display-project-name').innerText = projSel.value.replace(/_/g, ' ').toUpperCase();
+            document.getElementById('display-city-name').innerText = citySel.value;
+
             svgOverlay.innerHTML = '';
             activePoly = null;
             lastFetchedPlots = [];
-
-            document.getElementById('landing-projects').style.display = 'none';
-            document.getElementById('nav-controls').style.display = 'block';
-            mapArea.style.display = 'block';
 
             fetch(`/get_all_plots?city=${citySel.value}&project=${projSel.value}`)
             .then(res => res.json())
             .then(plots => {
                 if (Array.isArray(plots)) {
-                    lastFetchedPlots = plots; 
-                    document.getElementById('search-area').style.display = 'flex';
-                    updateSummary(plots); 
-                    
+                    lastFetchedPlots = plots;
+                    updateSummary(plots);
+
                     mapImg.onload = () => {
                         renderPlots(plots);
-                        mapArea.style.opacity = '1';
+                        resetMapView();
                     };
-                    
+
                     mapImg.src = `https://jpeezqoinwzrruknbsmy.supabase.co/storage/v1/object/public/project-maps/${citySel.value}/${projSel.value}/map.png`;
-                    if(mapImg.complete) mapImg.onload();
+                    if (mapImg.complete) mapImg.onload();
                 } else {
-                    console.error("Data error. Expected array, received:", plots);
-                    alert("Error loading plot data. Check console logs.");
+                    console.error("Data error:", plots);
+                    showToast("Error loading colony plot layout data.");
                 }
             });
         }
 
- function getColor(status, manualColor) {
-            // Clean the text to ensure exact matches
+        // --- COLOR MAPPING (Vacant -> Red, Registry -> Green, Booked -> Yellow) ---
+        function getColor(status, manualColor) {
             const colorType = manualColor ? String(manualColor).trim().toLowerCase() : "";
-            
-            if (colorType === 'blue') return { color: "#1a1a1a", fill: "url(#owner-pattern)" };
-            
-            // This guarantees the garden is 100% invisible (natural color) by default
-            if (colorType === 'green') return { color: "transparent", fill: "transparent" }; 
-            
+            if (colorType === 'blue') return { color: "#1E293B", fill: "url(#owner-pattern)" };
+            if (colorType === 'green') return { color: "transparent", fill: "transparent" };
+
             const s = status ? status.toLowerCase() : "";
-            if (s.includes('reg')) return { color: "#2ecc71", fill: "rgba(46, 204, 113, 0.4)" };
-            if (s.includes('book')) return { color: "#f1c40f", fill: "rgba(241, 196, 15, 0.4)" };
-            return { color: "#e74c3c", fill: "rgba(231, 76, 60, 0.2)" };
+            
+            // Registry done -> Green
+            if (s.includes('reg')) {
+                return { color: "#059669", fill: "rgba(16, 185, 129, 0.45)" };
+            }
+            // Booked -> Yellow
+            if (s.includes('book')) {
+                return { color: "#CA8A04", fill: "rgba(234, 179, 8, 0.5)" };
+            }
+            // Vacant -> Red
+            return { color: "#DC2626", fill: "rgba(239, 68, 68, 0.4)" };
         }
 
-function highlightPolygon(poly, status, manualColor) {
+        function highlightPolygon(poly, status, manualColor) {
             if (activePoly && activePoly !== poly) resetPolygon(activePoly);
-            activePoly = poly; 
+            activePoly = poly;
             const colors = getColor(status, manualColor);
             const colorType = manualColor ? String(manualColor).trim().toLowerCase() : "";
-            
+
             if (colorType === 'blue') {
                 poly.setAttribute("fill", colors.fill);
             } else if (colorType === 'green') {
-                // Fill the garden with a soft light blue on hover
-                poly.setAttribute("fill", "rgba(52, 152, 219, 0.5)"); 
+                poly.setAttribute("fill", "rgba(56, 189, 248, 0.5)");
             } else {
-                poly.setAttribute("fill", colors.fill.replace("0.4", "0.7").replace("0.2", "0.7"));
+                poly.setAttribute("fill", colors.fill.replace(/0\.\d+/, "0.8"));
             }
-            
-            // Make the border transparent for gardens so only the blue fill shows
-            poly.setAttribute("stroke", colorType === 'green' ? "transparent" : colors.color); 
-            poly.setAttribute("stroke-width", "4");
+
+            poly.setAttribute("stroke", colorType === 'green' ? "transparent" : "#0F172A");
+            poly.setAttribute("stroke-width", "3.5");
         }
+
         function resetPolygon(poly) {
             if (poly) {
                 const id = poly.id.replace('poly-', '');
                 const plot = lastFetchedPlots.find(p => String(p.plot_id).trim() === id);
                 if (plot) {
                     const colors = getColor(plot.status, plot.color);
-                    poly.setAttribute("fill", colors.fill); poly.setAttribute("stroke", colors.color); poly.setAttribute("stroke-width", "1");
+                    poly.setAttribute("fill", colors.fill);
+                    poly.setAttribute("stroke", colors.color);
+                    poly.setAttribute("stroke-width", "1");
                 }
             }
         }
 
+        // --- RENDER PLOT OVERLAYS ---
         function renderPlots(plots) {
-            svgOverlay.innerHTML = ''; svgOverlay.setAttribute('viewBox', `0 0 ${mapImg.naturalWidth} ${mapImg.naturalHeight}`);
+            svgOverlay.innerHTML = '';
+            svgOverlay.setAttribute('viewBox', `0 0 ${mapImg.naturalWidth} ${mapImg.naturalHeight}`);
+
             plots.forEach(plot => {
-                if(!plot.coords) return;
+                if (!plot.coords) return;
                 const poly = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
-                poly.setAttribute("points", plot.coords); const colors = getColor(plot.status, plot.color);
-                poly.setAttribute("fill", colors.fill); poly.setAttribute("stroke", colors.color); poly.setAttribute("stroke-width", "1");
+                poly.setAttribute("points", plot.coords);
+                const colors = getColor(plot.status, plot.color);
+                poly.setAttribute("fill", colors.fill);
+                poly.setAttribute("stroke", colors.color);
+                poly.setAttribute("stroke-width", "1");
                 poly.id = "poly-" + String(plot.plot_id).trim();
 
                 const isBlue = plot.color === 'blue';
                 const isVacant = plot.status && plot.status.toLowerCase().includes('vac') && !isBlue;
                 const isGarden = String(plot.plot_id).toLowerCase().includes('garden');
-                
-                // Allow interaction if logged in, if the plot is vacant, OR if it is a garden
                 const canInteract = !VIEW_MODE || isVacant || isGarden;
 
                 if (canInteract) {
-                    poly.onclick = (e) => { 
-                        isLocked = true; 
-                        highlightPolygon(poly, plot.status, plot.color); 
-                        
-                        // If the ID contains "garden", show the image. Otherwise, show normal details.
+                    poly.onclick = (e) => {
+                        e.stopPropagation();
+                        highlightPolygon(poly, plot.status, plot.color);
                         if (isGarden) {
                             showGardenImage(plot.plot_id);
                         } else {
-                            showInfo(plot, e.clientX, e.clientY); 
+                            showPlotDetails(plot);
                         }
                     };
-                    
+
                     if (IS_ADMIN) {
                         poly.oncontextmenu = (e) => {
-                            e.preventDefault(); isLocked = true; highlightPolygon(poly, plot.status, plot.color); startEdit(plot);
+                            e.preventDefault();
+                            e.stopPropagation();
+                            highlightPolygon(poly, plot.status, plot.color);
+                            startEdit(plot);
                         };
                     }
-
-                    poly.onmouseenter = (e) => { 
-                        if (!isLocked && window.innerWidth >= 768) { 
-                            clearTimeout(hideTimer); 
-                            highlightPolygon(poly, plot.status, plot.color); 
-                            // Only show the detail tooltip if it's NOT a garden
-                            if (!isGarden) {
-                                showInfo(plot, e.clientX, e.clientY); 
-                            }
-                        } 
-                    };
-                    poly.onmouseleave = () => { 
-                        if (!isLocked && window.innerWidth >= 768) { hideTimer = setTimeout(() => { if (!tooltip.matches(':hover')) closeTooltip(); }, 200); } 
-                    };
                 }
                 svgOverlay.appendChild(poly);
             });
         }
 
-        function showInfo(data, x, y) {
-            currentPlotData = data; const isBlue = data.color === 'blue'; const colors = getColor(data.status, data.color);
-            
-            let content = `<div class="t-header-row"><span class="t-value" style="color:var(--gold); font-size:1.4rem;">Plot #${data.plot_id}</span><button onclick="closeTooltip()">DONE</button></div><div class="t-body-content">`;
-            
-            if (!VIEW_MODE) {
-                content += `<span class="t-label">Type</span><span class="t-value">${isBlue ? "Land Owner" : "Developer Owned"}</span>`;
-            }
+        // --- STATUS FILTER CHIPS ---
+        function applyStatusFilter(filterType, btn) {
+            currentStatusFilter = filterType;
+            document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+            if(btn) btn.classList.add('active');
 
-            content += `<span class="t-label">Size</span><span class="t-value">${data.size || 'N/A'}</span>`;
-            if (!isBlue) content += `<span class="t-label">Status</span><span class="t-value" style="color:${colors.color}">${data.status || 'N/A'}</span>`;
-            
-            if (!VIEW_MODE) {
-                if (!isBlue) {
-                    content += `<span class="t-label">Owner</span><span class="t-value">${data.owner || 'N/A'}</span>`;
+            lastFetchedPlots.forEach(plot => {
+                const poly = document.getElementById("poly-" + String(plot.plot_id).trim());
+                if (!poly) return;
+
+                const isBlue = plot.color === 'blue';
+                const s = (plot.status || '').toLowerCase();
+
+                let shouldHighlight = true;
+                if (filterType === 'vacant') {
+                    shouldHighlight = s.includes('vac') && !isBlue;
+                } else if (filterType === 'booked') {
+                    shouldHighlight = s.includes('book') && !isBlue;
+                } else if (filterType === 'registry') {
+                    shouldHighlight = s.includes('reg') && !isBlue;
                 }
-                
-                if (data.status && !data.status.toLowerCase().includes('vac')) {
-                    let phone = data.customer_number || 'N/A'; 
-                    content += `<span class="t-label">Contact Number</span><span class="t-value">${phone}</span>`;
-                    
-                    if(phone !== 'N/A' && window.innerWidth < 768) {
-                        content += `
-                        <div class="mobile-actions">
-                            <a href="tel:${phone}" class="btn-action" style="background:#27ae60;">Call</a>
-                            <a href="https://wa.me/${phone}?text=Inquiry for Plot ${data.plot_id}" target="_blank" class="btn-action" style="background:#25D366;">WhatsApp</a>
-                        </div>`;
-                    }
-                    if(data.booking_date) content += `<span class="t-label">Booking Date</span><span class="t-value">${data.booking_date}</span>`;
+
+                if (shouldHighlight) {
+                    poly.style.opacity = '1';
+                    poly.style.pointerEvents = 'auto';
+                } else {
+                    poly.style.opacity = '0.12';
+                    poly.style.pointerEvents = 'none';
                 }
-                if (data.registry_date) content += `<span class="t-label">Registry Date</span><span class="t-value">${data.registry_date}</span>`;
-                
-                if (IS_ADMIN) content += `<button onclick="startEdit(currentPlotData)" style="width:100%; margin-top:20px; padding:12px; background:var(--edit); color:white; border:none; border-radius:8px; cursor:pointer; font-weight:bold;">Edit Details</button>`;
-            }
-            
-            document.getElementById('tooltip-content').innerHTML = content + '</div>';
-            tooltip.style.display = 'block';
-            
-            if (window.innerWidth >= 768) {
-                if (isLocked) { overlay.style.display = 'block'; tooltip.classList.add('is-centered'); }
-                else { tooltip.classList.remove('is-centered'); tooltip.style.left = (x + 25) + 'px'; tooltip.style.top = (y + 25) + 'px'; overlay.style.display = 'none'; }
-            } else applyZoomProofLayout();
+            });
         }
 
-        function startEdit(data) {
-            isLocked = true; currentPlotData = data;
+        // --- PLOT DETAILS DRAWER ---
+        function showPlotDetails(data) {
+            currentPlotData = data;
+            const isBlue = data.color === 'blue';
+            const colors = getColor(data.status, data.color);
+
+            document.getElementById('drawer-plot-id').innerText = `Plot #${data.plot_id}`;
             
+            const pill = document.getElementById('drawer-status-pill');
+            if (isBlue) {
+                pill.innerText = "Land Owner";
+                pill.style.background = "#F1F5F9";
+                pill.style.color = "#475569";
+            } else {
+                const st = data.status || 'Vacant';
+                pill.innerText = st;
+                if (st.toLowerCase().includes('reg')) {
+                    pill.style.background = "var(--registry-bg)";
+                    pill.style.color = "var(--registry)";
+                } else if (st.toLowerCase().includes('book')) {
+                    pill.style.background = "var(--booked-bg)";
+                    pill.style.color = "var(--booked)";
+                } else {
+                    pill.style.background = "var(--vacant-bg)";
+                    pill.style.color = "var(--vacant)";
+                }
+            }
+
+            let html = `
+                <div class="detail-card-grid">
+                    <div class="detail-item-box">
+                        <span class="detail-item-label"><i class="fa-solid fa-ruler-combined"></i> Plot Size</span>
+                        <span class="detail-item-value">${data.size ? data.size + ' sq.ft' : 'Standard'}</span>
+                    </div>
+                    <div class="detail-item-box">
+                        <span class="detail-item-label"><i class="fa-solid fa-building-user"></i> Plot Type</span>
+                        <span class="detail-item-value">${isBlue ? 'Landowner' : 'Developer'}</span>
+                    </div>
+                </div>
+            `;
+
+            if (!VIEW_MODE) {
+                html += `
+                    <div class="detail-item-box" style="margin-bottom:12px;">
+                        <span class="detail-item-label"><i class="fa-solid fa-user"></i> Allotted Owner</span>
+                        <span class="detail-item-value">${data.owner || 'Not Assigned / Vacant'}</span>
+                    </div>
+                `;
+
+                if (data.status && !String(data.status).toLowerCase().includes('vac')) {
+                    const rawPhone = data.customer_number != null ? String(data.customer_number).trim() : '';
+                    const cleanPhone = rawPhone.replace(/[^0-9]/g, '');
+                    const displayPhone = (rawPhone && rawPhone.toLowerCase() !== 'nan' && rawPhone.toLowerCase() !== 'null') ? rawPhone : 'N/A';
+                    
+                    html += `
+                        <div class="detail-item-box" style="margin-bottom:12px;">
+                            <span class="detail-item-label"><i class="fa-solid fa-phone"></i> Contact Phone</span>
+                            <span class="detail-item-value">${displayPhone}</span>
+                        </div>
+                    `;
+
+                    if (cleanPhone.length >= 7) {
+                        html += `
+                            <div class="contact-action-buttons">
+                                <a href="tel:${cleanPhone}" class="btn-contact btn-call">
+                                    <i class="fa-solid fa-phone"></i> Direct Call
+                                </a>
+                                <a href="https://wa.me/${cleanPhone}?text=Inquiry regarding Plot %23${data.plot_id} at ${projSel.value}" target="_blank" class="btn-contact btn-whatsapp">
+                                    <i class="fa-brands fa-whatsapp"></i> WhatsApp
+                                </a>
+                            </div>
+                        `;
+                    }
+
+                    if (data.booking_date) {
+                        html += `
+                            <div class="detail-item-box" style="margin-top:12px;">
+                                <span class="detail-item-label"><i class="fa-solid fa-calendar-day"></i> Booking Date</span>
+                                <span class="detail-item-value">${data.booking_date}</span>
+                            </div>
+                        `;
+                    }
+                }
+
+                if (data.registry_date) {
+                    html += `
+                        <div class="detail-item-box" style="margin-top:12px;">
+                            <span class="detail-item-label"><i class="fa-solid fa-certificate"></i> Registry Date</span>
+                            <span class="detail-item-value">${data.registry_date}</span>
+                        </div>
+                    `;
+                }
+
+                if (IS_ADMIN) {
+                    html += `
+                        <button class="btn-admin-edit" onclick="startEdit(currentPlotData)">
+                            <i class="fa-solid fa-pen-to-square"></i> Edit Plot Details
+                        </button>
+                    `;
+                }
+            } else {
+                html += `
+                    <div style="background:#FEF2F2; border:1px solid #FECACA; border-radius:12px; padding:14px; text-align:center; margin-top:12px;">
+                        <span style="color:#DC2626; font-size:0.85rem; font-weight:700; display:block;">
+                            <i class="fa-solid fa-circle-check"></i> Available for Immediate Booking
+                        </span>
+                        <span style="color:#B91C1C; font-size:0.75rem;">Contact Techunited sales desk to reserve this prime plot.</span>
+                    </div>
+                `;
+            }
+
+            document.getElementById('drawer-content-body').innerHTML = html;
+            drawer.style.display = 'block';
+            overlay.style.display = 'block';
+            setTimeout(() => {
+                drawer.classList.add('active');
+                overlay.classList.add('active');
+            }, 10);
+        }
+
+        function closeDrawer() {
+            if (activePoly) resetPolygon(activePoly);
+            drawer.classList.remove('active');
+            overlay.classList.remove('active');
+            setTimeout(() => {
+                drawer.style.display = 'none';
+                overlay.style.display = 'none';
+            }, 200);
+        }
+
+        // --- ADMIN EDIT FORM ---
+        function startEdit(data) {
+            currentPlotData = data;
             const currentStatus = data.status || '';
             const statusReg = currentStatus.toLowerCase().includes('reg') ? 'selected' : '';
             const statusBook = currentStatus.toLowerCase().includes('book') ? 'selected' : '';
             const statusVac = currentStatus.toLowerCase().includes('vac') ? 'selected' : '';
 
-            document.getElementById('tooltip-content').innerHTML = `
-                <div class="t-header-row"><strong style="color:var(--edit);">Edit #${data.plot_id}</strong><button onclick="closeTooltip()">CANCEL</button></div>
-                <div class="t-body-content">
-                    <span class="t-label">Size</span><input type="text" id="edit-size" value="${data.size || ''}" class="edit-input">
-                    <span class="t-label">Status</span>
-                    <select id="edit-status" class="edit-input">
-                        <option value="Registry done" ${statusReg}>Registry done</option>
-                        <option value="Booked" ${statusBook}>Booked</option>
-                        <option value="Vacant" ${statusVac}>Vacant</option>
+            document.getElementById('drawer-plot-id').innerText = `Edit Plot #${data.plot_id}`;
+            document.getElementById('drawer-status-pill').innerText = "Editing";
+            document.getElementById('drawer-status-pill').style.background = "#FEF3C7";
+            document.getElementById('drawer-status-pill').style.color = "#D97706";
+
+            let formHtml = `
+                <div class="form-group">
+                    <label>Plot Size (sq.ft)</label>
+                    <input type="text" id="edit-size" value="${data.size || ''}" class="form-control" placeholder="e.g. 1191.6">
+                </div>
+                <div class="form-group">
+                    <label>Current Status</label>
+                    <select id="edit-status" class="form-control">
+                        <option value="Vacant" ${statusVac}>Vacant (Red)</option>
+                        <option value="Booked" ${statusBook}>Booked (Yellow)</option>
+                        <option value="Registry done" ${statusReg}>Registry done (Green)</option>
                     </select>
-                    <span class="t-label">Color</span>
-                    <select id="edit-color" class="edit-input">
-                        <option value="">Default</option>
-                        <option value="blue" ${data.color === 'blue' ? 'selected' : ''}>Land Owner (Stripe Pattern)</option>
+                </div>
+                <div class="form-group">
+                    <label>Plot Category / Pattern</label>
+                    <select id="edit-color" class="form-control">
+                        <option value="">Standard Developer Plot</option>
+                        <option value="blue" ${data.color === 'blue' ? 'selected' : ''}>Land Owner (Stripe Hatching)</option>
                     </select>
-                    <span class="t-label">Owner</span><input type="text" id="edit-owner" value="${data.owner || ''}" class="edit-input">
-                    <span class="t-label">Number</span><input type="text" id="edit-num" value="${data.customer_number || ''}" class="edit-input">
-                    <span class="t-label">Booking Date</span><input type="date" id="edit-book" value="${data.booking_date || ''}" class="edit-input">
-                    <span class="t-label">Registry Date</span><input type="date" id="edit-reg" value="${data.registry_date || ''}" class="edit-input">
-                    <button onclick="saveDetails()" style="background:#27ae60; color:white; border:none; padding:15px; border-radius:8px; width:100%; margin-top:15px; cursor:pointer; font-weight:bold;">Save Changes</button>
-                </div>`;
-            
-            tooltip.style.display = 'block'; 
-            if (window.innerWidth >= 768) { tooltip.classList.add('is-centered'); overlay.style.display = 'block'; } else applyZoomProofLayout();
+                </div>
+                <div class="form-group">
+                    <label>Allotted Owner Name</label>
+                    <input type="text" id="edit-owner" value="${data.owner || ''}" class="form-control" placeholder="Full name">
+                </div>
+                <div class="form-group">
+                    <label>Customer Phone Number</label>
+                    <input type="text" id="edit-num" value="${data.customer_number || ''}" class="form-control" placeholder="10-digit mobile number">
+                </div>
+                <div class="form-group">
+                    <label>Booking Date</label>
+                    <input type="date" id="edit-book" value="${data.booking_date || ''}" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label>Registry Date</label>
+                    <input type="date" id="edit-reg" value="${data.registry_date || ''}" class="form-control">
+                </div>
+                <button class="btn-save-plot" onclick="saveDetails()">
+                    <i class="fa-solid fa-floppy-disk"></i> Save Plot Changes
+                </button>
+            `;
+
+            document.getElementById('drawer-content-body').innerHTML = formHtml;
+            drawer.style.display = 'block';
+            overlay.style.display = 'block';
+            setTimeout(() => {
+                drawer.classList.add('active');
+                overlay.classList.add('active');
+            }, 10);
         }
 
         function saveDetails() {
-            const body = { 
+            const body = {
                 project: projSel.value,
-                plot_id: currentPlotData.plot_id, 
-                size: document.getElementById('edit-size').value, 
-                status: document.getElementById('edit-status').value, 
-                color: document.getElementById('edit-color').value, 
-                owner: document.getElementById('edit-owner').value, 
-                customer_number: document.getElementById('edit-num').value, 
-                booking_date: document.getElementById('edit-book').value, 
-                registry_date: document.getElementById('edit-reg').value 
+                plot_id: currentPlotData.plot_id,
+                size: document.getElementById('edit-size').value,
+                status: document.getElementById('edit-status').value,
+                color: document.getElementById('edit-color').value,
+                owner: document.getElementById('edit-owner').value,
+                customer_number: document.getElementById('edit-num').value,
+                booking_date: document.getElementById('edit-book').value,
+                registry_date: document.getElementById('edit-reg').value
             };
-            
-            fetch('/save_plot_details', { 
-                method: 'POST', 
-                headers: {'Content-Type': 'application/json'}, 
-                body: JSON.stringify(body) 
+
+            fetch('/save_plot_details', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
             })
             .then(res => res.json())
-            .then(res => { 
-                if(res.success) { 
-                    closeTooltip(); 
-                    loadMap(); 
+            .then(res => {
+                if (res.success) {
+                    showToast("Plot details saved successfully!");
+                    closeDrawer();
+                    loadMap();
                 } else {
-                    alert("Error saving details. Check logs.");
+                    showToast("Error updating plot details.");
                 }
-            });
+            })
+            .catch(() => showToast("Network error while saving."));
         }
 
-        function closeTooltip() { isLocked = false; if (activePoly) resetPolygon(activePoly); tooltip.style.display = 'none'; overlay.style.display = 'none'; tooltip.classList.remove('is-centered'); document.body.classList.remove('no-scroll'); document.getElementById('tooltip-content').style.transform = 'none'; }
-
+        // --- KPI SUMMARY (Vacant -> Red, Booked -> Yellow, Registry -> Green) ---
         function updateSummary(plots) {
             if (!Array.isArray(plots)) return;
-            
             const validPlots = plots.filter(p => p.color !== 'blue');
-            const total = validPlots.length; 
-            
-            const reg = plots.filter(p => p.status && p.status.toLowerCase().includes('reg')).length; 
+            const total = validPlots.length;
+            const reg = plots.filter(p => p.status && p.status.toLowerCase().includes('reg')).length;
             const book = plots.filter(p => p.status && p.status.toLowerCase().includes('book')).length;
-            const vacant = plots.filter(p => p.status && p.status.toLowerCase().includes('vacant') && p.color !== 'blue').length; 
-            
-            document.getElementById('count-total').innerText = total; 
-            document.getElementById('count-reg').innerText = reg; 
-            document.getElementById('count-book').innerText = book; 
-            document.getElementById('count-vacant').innerText = vacant; 
-            document.getElementById('summary-bar').style.display = 'flex';
+            const vacant = plots.filter(p => p.status && p.status.toLowerCase().includes('vac') && p.color !== 'blue').length;
+
+            document.getElementById('count-total').innerText = total;
+            document.getElementById('count-reg').innerText = reg;
+            document.getElementById('count-book').innerText = book;
+            document.getElementById('count-vacant').innerText = vacant;
         }
 
+        // --- PLOT SEARCH & JUMP ---
         function searchPlot() {
             const searchId = document.getElementById('plot-search').value.trim();
+            if (!searchId) return;
+
             const match = lastFetchedPlots.find(p => String(p.plot_id).trim() === searchId);
-            
             if (match) {
-                const isBlue = match.color === 'blue';
-                const isVacant = match.status && match.status.toLowerCase().includes('vac') && !isBlue;
-                const isGarden = String(match.plot_id).toLowerCase().includes('garden');
-                const canInteract = !VIEW_MODE || isVacant || isGarden;
-                
-                if (canInteract) {
-                    isLocked = true; 
-                    const poly = document.getElementById("poly-" + searchId); 
-                    highlightPolygon(poly, match.status, match.color); 
-                    if (isGarden) {
-                        showGardenImage(match.plot_id);
-                    } else {
-                        showInfo(match, window.innerWidth/2, window.innerHeight/2); 
-                    }
+                const poly = document.getElementById("poly-" + searchId);
+                if (poly) {
+                    highlightPolygon(poly, match.status, match.color);
+                    showToast(`Plot #${searchId} found!`);
+                    showPlotDetails(match);
                 }
+            } else {
+                showToast(`Plot #${searchId} not found in this colony.`);
             }
         }
 
         function showGardenImage(gardenId) {
-            // Clean up the ID to make it look nice for the title
             document.getElementById('garden-title').innerText = gardenId.replace(/_/g, ' ').toUpperCase();
-            
-            // Explicitly use .jpeg as requested
             const imgUrl = `https://jpeezqoinwzrruknbsmy.supabase.co/storage/v1/object/public/project-maps/${citySel.value}/${projSel.value}/${gardenId}.jpeg`;
-            
             document.getElementById('garden-img').src = imgUrl;
-            
-            // HIDE THE STANDARD TOOLTIP if it's open
-            document.getElementById('tooltip').style.display = 'none';
-            
+
+            closeDrawer();
             document.getElementById('image-modal').style.display = 'block';
             overlay.style.display = 'block';
+            setTimeout(() => overlay.classList.add('active'), 10);
+        }
+
+        // --- TOAST HELPER ---
+        function showToast(msg) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = 'toast-msg';
+            toast.innerHTML = `<i class="fa-solid fa-circle-info"></i> ${msg}`;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(10px)';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
         }
     </script>
 </body>

@@ -8,7 +8,7 @@ from datetime import datetime
 load_dotenv()
 
 app = Flask(__name__)
-app.secret_key = "techunited_plot_locator_secure_2026"
+app.secret_key = os.environ.get("SECRET_KEY", "techunited_plot_locator_secure_2026")
 
 # Initialize Supabase
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
@@ -23,10 +23,10 @@ app.config['TEMPLATES_AUTO_RELOAD'] = True
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
 
 # --- CONFIGURATION ---
-ADMIN_USERNAME = "admin"
-ADMIN_PASSWORD = "password123"
-EMPLOYEE_USERNAME = "employee_123"
-EMPLOYEE_PASSWORD = "employee"
+ADMIN_USERNAME = os.environ.get("ADMIN_USERNAME")
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD")
+EMPLOYEE_USERNAME = os.environ.get("EMPLOYEE_USERNAME")
+EMPLOYEE_PASSWORD = os.environ.get("EMPLOYEE_PASSWORD")
 
 CITIES_CONFIG = {
     "Khandwa": ["muffadal_park", "smart_city", "hi_link", "mahakali_puram", "keshav_nagar", "shriram_setu_puram"],
@@ -130,4 +130,4 @@ def save_plot_details():
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=True)
