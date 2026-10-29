@@ -422,6 +422,204 @@
             color: var(--accent-gold-hover);
         }
 
+        /* --- OFFICE LOCATION SECTION --- */
+        .office-location-section {
+            margin-top: 3.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .office-section-header {
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .office-section-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 12px;
+            background: var(--accent-gold-light);
+            color: var(--accent-gold-hover);
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+        }
+
+        .office-section-title {
+            font-family: var(--font-heading);
+            font-size: 1.75rem;
+            font-weight: 800;
+            color: var(--primary);
+            letter-spacing: -0.02em;
+        }
+
+        .office-card {
+            background: var(--surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-xl);
+            overflow: hidden;
+            box-shadow: var(--shadow-md);
+            display: grid;
+            grid-template-columns: 1fr 1.15fr;
+            transition: all 0.3s ease;
+        }
+
+        .office-card:hover {
+            box-shadow: var(--shadow-lg);
+            border-color: rgba(217, 119, 6, 0.35);
+        }
+
+        .office-info {
+            padding: 2.25rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            background: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%);
+        }
+
+        .office-name {
+            font-family: var(--font-heading);
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .office-address {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            margin-bottom: 1.5rem;
+        }
+
+        .office-address i {
+            color: var(--accent-gold);
+            font-size: 1.1rem;
+            margin-top: 3px;
+            flex-shrink: 0;
+        }
+
+        .office-features {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 1.75rem;
+            padding: 1rem;
+            background: rgba(241, 245, 249, 0.65);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-subtle);
+        }
+
+        .office-feature-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            font-size: 0.85rem;
+        }
+
+        .office-feature-item i {
+            color: var(--primary);
+            font-size: 0.95rem;
+            margin-top: 3px;
+            width: 18px;
+            text-align: center;
+        }
+
+        .office-feature-item strong {
+            display: block;
+            color: var(--primary);
+            font-weight: 700;
+        }
+
+        .office-feature-item span {
+            color: var(--text-secondary);
+        }
+
+        .office-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .btn-directions {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 18px;
+            background: var(--primary);
+            color: white;
+            border-radius: var(--radius-md);
+            font-size: 0.88rem;
+            font-weight: 700;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 10px rgba(15, 23, 42, 0.15);
+        }
+
+        .btn-directions:hover {
+            background: var(--accent-gold);
+            transform: translateY(-2px);
+            color: white;
+        }
+
+        .btn-open-maps {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 18px;
+            background: white;
+            color: var(--primary);
+            border: 1px solid var(--border-medium);
+            border-radius: var(--radius-md);
+            font-size: 0.88rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .btn-open-maps:hover {
+            border-color: var(--accent-gold);
+            color: var(--accent-gold);
+            transform: translateY(-2px);
+        }
+
+        .office-map-container {
+            width: 100%;
+            min-height: 360px;
+            height: 100%;
+            position: relative;
+            background: #E2E8F0;
+        }
+
+        .office-map-container iframe {
+            width: 100%;
+            height: 100%;
+            min-height: 360px;
+            display: block;
+            border: 0;
+        }
+
+        @media (max-width: 900px) {
+            .office-card {
+                grid-template-columns: 1fr;
+            }
+            .office-info {
+                padding: 1.5rem;
+            }
+            .office-map-container {
+                min-height: 280px;
+            }
+            .office-map-container iframe {
+                min-height: 280px;
+            }
+        }
+
         /* --- MAP WORKSPACE --- */
         #workspace-view {
             display: none;
@@ -1409,6 +1607,62 @@
                         <div class="project-card-footer">
                             <span class="view-map-link">View Layout Map <i class="fa-solid fa-arrow-right"></i></span>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= OFFICE LOCATION SECTION ================= -->
+            <div class="office-location-section">
+                <div class="office-section-header">
+                    <div class="office-section-badge">
+                        <i class="fa-solid fa-map-pin"></i> Visit Us
+                    </div>
+                    <h2 class="office-section-title">Our Office Location</h2>
+                </div>
+
+                <div class="office-card">
+                    <div class="office-info">
+                        <h3 class="office-name">Tech United</h3>
+                        <p class="office-address">
+                            <i class="fa-solid fa-location-dot"></i>
+                            <span>50, Santosh Nagar, Vidhyuth Nagar, Khandwa, Madhya Pradesh 450001</span>
+                        </p>
+                        <div class="office-features">
+                            <div class="office-feature-item">
+                                <i class="fa-solid fa-clock"></i>
+                                <div>
+                                    <strong>Working Hours</strong>
+                                    <span>Monday - Saturday: 10:00 AM – 7:00 PM</span>
+                                </div>
+                            </div>
+                            <div class="office-feature-item">
+                                <i class="fa-solid fa-handshake"></i>
+                                <div>
+                                    <strong>Plot Consultations</strong>
+                                    <span>In-person site visits, registry assistance & plot bookings</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="office-actions">
+                            <a href="https://www.google.com/maps/search/?api=1&query=Tech+United,+50,+Santosh+Nagar,+Vidhyuth+Nagar,+Khandwa,+Madhya+Pradesh+450001" target="_blank" rel="noopener noreferrer" class="btn-directions">
+                                <i class="fa-solid fa-diamond-turn-right"></i> Get Directions
+                            </a>
+                            <a href="https://maps.google.com/?q=Tech+United,+50,+Santosh+Nagar,+Vidhyuth+Nagar,+Khandwa,+Madhya+Pradesh+450001" target="_blank" rel="noopener noreferrer" class="btn-open-maps">
+                                <i class="fa-brands fa-google"></i> Open in Maps
+                            </a>
+                        </div>
+                    </div>
+                    <div class="office-map-container">
+                        <iframe 
+                            src="https://maps.google.com/maps?q=Tech%20United,%2050,%20Santosh%20Nagar,%20Vidhyuth%20Nagar,%20Khandwa,%20Madhya%20Pradesh%20450001&t=&z=16&ie=UTF8&iwloc=&output=embed"
+                            width="100%" 
+                            height="100%" 
+                            style="border:0;" 
+                            allowfullscreen="" 
+                            loading="lazy" 
+                            referrerpolicy="no-referrer-when-downgrade"
+                            title="Tech United Khandwa Office Location">
+                        </iframe>
                     </div>
                 </div>
             </div>
