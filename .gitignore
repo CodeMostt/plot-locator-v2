@@ -3,3 +3,11 @@ __pycache__/
 .venv/
 .DS_Store
 structured_social_data.csv
+
+# Local data, backups, and large image assets (served from Supabase storage)
+backups/
+data/
+static/Khandwa/
+static/Mundi/
+static/Jawar/
+
